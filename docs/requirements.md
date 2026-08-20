@@ -382,8 +382,10 @@ Logs           420 MB
 Trash            1.7 GB
 Total           15.1 GB
 
-[Review]    [Make Room]
+[Review]
 ```
+
+※ v1.0 の `[Review] [Make Room]` 2 ボタンは両方 Review 画面へ遷移する重複だったため、**ブルーの `Review` 単一ボタン**に統合（design-system §8）。**[v1.2 修正]**
 
 Review 画面（各項目 ON/OFF 可能）:
 
