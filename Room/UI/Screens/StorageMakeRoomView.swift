@@ -23,7 +23,7 @@ struct StorageMakeRoomView: View {
     @MainActor private static var isCleaning = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             if case .cleaning = phase {
                 Text("Make Room — Storage").font(.headline)
             } else {
@@ -31,7 +31,7 @@ struct StorageMakeRoomView: View {
             }
             content
         }
-        .padding(12)
+        .padding(16)
         .onAppear { startScan() }
         .onDisappear { scanTask?.cancel() }
     }
@@ -60,7 +60,7 @@ struct StorageMakeRoomView: View {
     @ViewBuilder private func resultsView(_ items: [CleanupItem]) -> some View {
         if let s = state.storage {
             Text(ByteText.pair(used: s.usedBytes, total: s.totalBytes, base: .storage1000))
-                .font(.callout).monospacedDigit()
+                .font(.body).monospacedDigit()
             StatRow(label: "Free", value: ByteText.long(s.freeBytes, base: .storage1000))
         }
 

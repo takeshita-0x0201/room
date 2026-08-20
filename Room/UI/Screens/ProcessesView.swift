@@ -14,7 +14,7 @@ struct ProcessesView: View {
         ownPid: ProcessInfo.processInfo.processIdentifier)
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             BackHeader(title: "Processes", route: $route, back: .home)
 
             ScrollView {
@@ -26,7 +26,7 @@ struct ProcessesView: View {
             }
             .frame(maxHeight: 320)
         }
-        .padding(12)
+        .padding(16)
         .confirmationDialog(
             "Force Quit \(confirmingForceQuit?.displayName ?? "")?",
             isPresented: .init(get: { confirmingForceQuit != nil },
@@ -73,7 +73,7 @@ struct ProcessesView: View {
                 .controlSize(.small)
                 .disabled(!forceQuittable)
         }
-        .font(.callout)
+        .font(.body)
         .padding(.vertical, 2)
     }
 

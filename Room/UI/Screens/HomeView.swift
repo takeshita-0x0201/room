@@ -6,7 +6,7 @@ struct HomeView: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 26) {
             header
 
             HStack(alignment: .top, spacing: 16) {
@@ -17,19 +17,9 @@ struct HomeView: View {
 
             topProcesses
 
-            Divider()
-
-            NavRow(icon: Image(nsImage: RoomIcon.menuBarImage()), title: "Make Room") {
-                route = .makeRoom
-            }
-            NavRow(icon: Image(systemName: "gauge"), title: "Processes", showsChevron: true) {
-                route = .processes
-            }
-            NavRow(icon: Image(systemName: "gearshape"), title: "Settings") {
-                openSettingsWindow()
-            }
+            footer
         }
-        .padding(12)
+        .padding(16)
     }
 
     private var header: some View {
@@ -47,21 +37,36 @@ struct HomeView: View {
         }
     }
 
+    private var footer: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Divider()
+            NavRow(icon: Image(nsImage: RoomIcon.menuBarImage()), title: "Make Room") {
+                route = .makeRoom
+            }
+            NavRow(icon: Image(systemName: "gauge"), title: "Processes", showsChevron: true) {
+                route = .processes
+            }
+            NavRow(icon: Image(systemName: "gearshape"), title: "Settings") {
+                openSettingsWindow()
+            }
+        }
+    }
+
     private func openSettingsWindow() {
         openSettings()
         NSApp.activate(ignoringOtherApps: true)
     }
 
     @ViewBuilder private var memoryColumn: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             SectionHeader(title: "Memory", systemImage: "memorychip",
                           trailing: state.memory.map { ByteText.percent($0.usedFraction) + "%" })
             if let m = state.memory {
                 UsageBar(fraction: m.usedFraction, tint: .blue)
                 Text(ByteText.pair(used: m.usedBytes, total: m.totalBytes, base: .memory1024))
-                    .font(.callout).monospacedDigit()
+                    .font(.body).monospacedDigit()
                 StatRow(label: "Free", value: ByteText.long(m.freeBytes, base: .memory1024))
-                StatRow(label: "Pressure", value: m.pressure.rawValue, valueColor: m.pressure.color)
+                PressureRow(pressure: m.pressure)
                 StatRow(label: "Swap", value: ByteText.long(m.swapUsedBytes, base: .memory1024))
             }
         }
@@ -70,13 +75,13 @@ struct HomeView: View {
     }
 
     @ViewBuilder private var storageColumn: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             SectionHeader(title: "Storage", systemImage: "internaldrive",
                           trailing: state.storage.map { ByteText.percent($0.usedFraction) + "%" })
             if let s = state.storage {
                 UsageBar(fraction: s.usedFraction, tint: .green)
                 Text(ByteText.pair(used: s.usedBytes, total: s.totalBytes, base: .storage1000))
-                    .font(.callout).monospacedDigit()
+                    .font(.body).monospacedDigit()
                 StatRow(label: "Free", value: ByteText.long(s.freeBytes, base: .storage1000))
             }
         }
@@ -85,19 +90,17 @@ struct HomeView: View {
     }
 
     @ViewBuilder private var topProcesses: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             SectionHeader(title: "Top Processes", systemImage: "chart.bar")
             ForEach(state.processes.prefix(3)) { group in
-                HStack(spacing: 6) {
-                    Image(nsImage: AppIconProvider.icon(for: group))
-                        .accessibilityHidden(true)
+                HStack {
                     Text(group.displayName).lineLimit(1)
                     Spacer()
                     Text(ByteText.long(group.footprintBytes, base: .memory1024))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                 }
-                .font(.callout)
+                .font(.body)
                 .accessibilityElement(children: .combine)
             }
         }

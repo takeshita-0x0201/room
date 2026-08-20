@@ -72,7 +72,6 @@ struct SettingsView: View {
     private func previewChip(for mode: DisplayMode) -> some View {
         let sample = sampleValues(for: mode)
         return HStack(spacing: 4) {
-            Image(nsImage: RoomIcon.menuBarImage(pointSize: 12))
             Image(systemName: "memorychip")
             Text(sample.memory)
             Image(systemName: "internaldrive")

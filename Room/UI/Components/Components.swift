@@ -35,7 +35,27 @@ struct StatRow: View {
             Spacer()
             Text(value).monospacedDigit().foregroundStyle(valueColor)
         }
-        .font(.callout)
+        .font(.body)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Pressure 行: 色丸（●）+ 通常色テキスト。状態テキスト自体には着色しない（design-system §3）
+struct PressureRow: View {
+    let pressure: MemoryPressureLevel
+
+    var body: some View {
+        HStack {
+            Text("Pressure").foregroundStyle(.secondary)
+            Spacer()
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(pressure.color)
+                    .frame(width: 7, height: 7)
+                Text(pressure.rawValue)
+            }
+        }
+        .font(.body)
         .accessibilityElement(children: .combine)
     }
 }

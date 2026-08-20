@@ -14,12 +14,11 @@ struct MemoryMakeRoomView: View {
     private static let minimumFootprint: UInt64 = 200 * 1024 * 1024   // 200 MB 未満は候補にしない
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             BackHeader(title: "Make Room — Memory", route: $route, back: .makeRoom)
 
             if let memory = state.memory {
-                StatRow(label: "Pressure", value: memory.pressure.rawValue,
-                        valueColor: memory.pressure.color)
+                PressureRow(pressure: memory.pressure)
                 StatRow(label: "Swap",
                         value: ByteText.long(memory.swapUsedBytes, base: .memory1024))
 
@@ -38,7 +37,7 @@ struct MemoryMakeRoomView: View {
                 }
             }
         }
-        .padding(12)
+        .padding(16)
     }
 
     private var candidates: [ProcessGroup] {
