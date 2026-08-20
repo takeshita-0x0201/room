@@ -34,9 +34,9 @@ struct HomeView: View {
 
     private var header: some View {
         HStack(spacing: 6) {
-            Image(nsImage: RoomIcon.menuBarImage())
+            Image(nsImage: RoomIcon.menuBarImage(pointSize: 22))
                 .accessibilityHidden(true)
-            Text("Room").font(.headline)
+            Text("Room").font(.title3.weight(.semibold))
             Spacer()
             Button { openSettingsWindow() } label: {
                 Image(systemName: "gearshape")
@@ -54,7 +54,7 @@ struct HomeView: View {
 
     @ViewBuilder private var memoryColumn: some View {
         VStack(alignment: .leading, spacing: 4) {
-            SectionHeader(title: "MEMORY", systemImage: "memorychip",
+            SectionHeader(title: "Memory", systemImage: "memorychip",
                           trailing: state.memory.map { ByteText.percent($0.usedFraction) + "%" })
             if let m = state.memory {
                 UsageBar(fraction: m.usedFraction, tint: .blue)
@@ -71,7 +71,7 @@ struct HomeView: View {
 
     @ViewBuilder private var storageColumn: some View {
         VStack(alignment: .leading, spacing: 4) {
-            SectionHeader(title: "STORAGE", systemImage: "internaldrive",
+            SectionHeader(title: "Storage", systemImage: "internaldrive",
                           trailing: state.storage.map { ByteText.percent($0.usedFraction) + "%" })
             if let s = state.storage {
                 UsageBar(fraction: s.usedFraction, tint: .green)
@@ -86,7 +86,7 @@ struct HomeView: View {
 
     @ViewBuilder private var topProcesses: some View {
         VStack(alignment: .leading, spacing: 4) {
-            SectionHeader(title: "TOP PROCESSES", systemImage: "chart.bar")
+            SectionHeader(title: "Top Processes", systemImage: "chart.bar")
             ForEach(state.processes.prefix(3)) { group in
                 HStack(spacing: 6) {
                     Image(nsImage: AppIconProvider.icon(for: group))

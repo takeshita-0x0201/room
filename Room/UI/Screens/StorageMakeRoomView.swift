@@ -64,7 +64,7 @@ struct StorageMakeRoomView: View {
             StatRow(label: "Free", value: ByteText.long(s.freeBytes, base: .storage1000))
         }
 
-        SectionHeader(title: "CLEANABLE")
+        SectionHeader(title: "Cleanable")
         // Total は「今すぐ消せる量」だけを合算（要件 D22: blocked / FDA を混ぜて水増ししない）
         let ready = items.filter { $0.state == .ready }
         let totals = CleanupSummary.totals(ready)
@@ -102,7 +102,7 @@ struct StorageMakeRoomView: View {
     }
 
     @ViewBuilder private func reviewView(_ items: [CleanupItem]) -> some View {
-        SectionHeader(title: "REVIEW")
+        SectionHeader(title: "Review")
         ForEach(items) { item in
             switch item.state {
             case .ready:

@@ -6,14 +6,14 @@ struct SectionHeader: View {
     var trailing: String?
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 5) {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.body)
                     .foregroundStyle(.secondary)
             }
             Text(title)
-                .font(.subheadline.weight(.bold))
+                .font(.body)
             Spacer()
             if let trailing {
                 Text(trailing)
