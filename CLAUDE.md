@@ -6,7 +6,7 @@ Common rules are in @AGENTS.md (required reading). Build & test, repository stru
 
 - The main session (parent) is **PM-only**. It only makes decisions, decomposes tasks, dispatches work, and reviews deliverables — it never implements, verifies, or runs tests itself.
 - Implementation is delegated via the Agent tool to subagents with an explicit `model` (default `sonnet`; `opus` for hard spots involving system APIs, `haiku` for documentation).
-- Each task in the implementation plan `docs/superpowers/plans/2026-08-20-room-mvp.md` specifies its assigned model; follow that.
+- Task-by-task model assignment is decided by the PM at dispatch time (default `sonnet`, `opus` for system-API-heavy work, `haiku` for docs).
 
 ## Escalation
 

@@ -156,7 +156,7 @@ Default:
 
 The Room icon is not always shown in the menu bar (v0.1 on-device feedback). **[v1.2 revision]**
 
-- No text such as `RAM`, `SSD`, `%`, or `・` is shown — icon + number only
+- No text such as `RAM`, `SSD`, `%`, or separator dots is shown — icon + number only
 - Display order is fixed as Memory → Storage
 - **[v1.1 decision]** Numbers are rendered in monospaced digits to prevent width jitter on updates
 - **[v1.1 decision]** When both Show Memory and Show Storage are OFF, only the Room icon is shown

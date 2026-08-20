@@ -1,6 +1,6 @@
 ---
 name: release-audit
-description: Use when preparing to stage, push, or release Room, after a batch of feedback-driven changes, or when the user asks for a release audit (リリース前監査・最終監査・Fable 監査). Also use before tagging a version or opening the repo to the public.
+description: Use when preparing to stage, push, or release Room, after a batch of feedback-driven changes, or when the user asks for a release audit, final audit, or pre-release audit. Also use before tagging a version or opening the repo to the public.
 ---
 
 # Room Pre-Release Audit

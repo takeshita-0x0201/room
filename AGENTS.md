@@ -22,7 +22,6 @@ Design principles:
 Read the following before starting any implementation.
 
 - `docs/requirements.md` — requirements specification v1.1. Includes metric definitions (§6), permission model (§5), process protection rules (§15), cleanup specification (§17–18), and more.
-- `docs/superpowers/plans/2026-08-20-room-mvp.md` — implementation plan. Includes task decomposition and assigned model per task.
 
 **When in doubt about a specification decision, `docs/requirements.md` is authoritative.**
 
