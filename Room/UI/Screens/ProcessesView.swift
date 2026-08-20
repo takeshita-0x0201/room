@@ -15,7 +15,7 @@ struct ProcessesView: View {
         ownPid: ProcessInfo.processInfo.processIdentifier)
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             BackHeader(title: "Processes", route: $route, back: .home)
 
             ScrollView {
@@ -27,7 +27,7 @@ struct ProcessesView: View {
             }
             .frame(maxHeight: 320)
         }
-        .padding(16)
+        .padding(13)
         .confirmationDialog(
             "Force Quit \(confirmingForceQuit?.displayName ?? "")?",
             isPresented: .init(get: { confirmingForceQuit != nil },
@@ -53,7 +53,7 @@ struct ProcessesView: View {
         // Finder 等「通常終了は許可・強制終了は不可」のシステムアプリ（design-system §7）
         let forceQuittable = quittable
             && !ProcessProtectionPolicy.allowedSystemApps.contains(group.displayName)
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
             VStack(alignment: .leading, spacing: 1) {
                 Text(group.displayName).lineLimit(1)
                 if stillRunning.contains(group.id) {

@@ -23,7 +23,7 @@ struct StorageMakeRoomView: View {
     @MainActor private static var isCleaning = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 13) {
             if case .cleaning = phase {
                 Text("Make Room — Storage").font(.headline)
             } else {
@@ -31,7 +31,7 @@ struct StorageMakeRoomView: View {
             }
             content
         }
-        .padding(16)
+        .padding(13)
         .onAppear { startScan() }
         .onDisappear { scanTask?.cancel() }
     }

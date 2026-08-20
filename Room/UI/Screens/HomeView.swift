@@ -6,18 +6,18 @@ struct HomeView: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 26) {
+        VStack(alignment: .leading, spacing: 21) {
             header
             memorySection
             storageSection
             topProcesses
             footer
         }
-        .padding(16)
+        .padding(13)
     }
 
     private var header: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
             Image(nsImage: RoomIcon.menuBarImage(pointSize: 22))
                 .accessibilityHidden(true)
             Text("Room").font(.title3.weight(.semibold))
@@ -32,7 +32,7 @@ struct HomeView: View {
     }
 
     private var footer: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Divider()
             NavRow(icon: Image(nsImage: RoomIcon.menuBarImage()), title: "Make Room") {
                 route = .makeRoom
@@ -52,7 +52,7 @@ struct HomeView: View {
     }
 
     @ViewBuilder private var memorySection: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             SectionHeader(title: "Memory", systemImage: "memorychip",
                           trailing: state.memory.map { ByteText.percent($0.usedFraction) + "%" })
             if let m = state.memory {
@@ -68,7 +68,7 @@ struct HomeView: View {
     }
 
     @ViewBuilder private var storageSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             SectionHeader(title: "Storage", systemImage: "internaldrive",
                           trailing: state.storage.map { ByteText.percent($0.usedFraction) + "%" })
             if let s = state.storage {
@@ -82,7 +82,7 @@ struct HomeView: View {
     }
 
     @ViewBuilder private var topProcesses: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             SectionHeader(title: "Top Processes", systemImage: "chart.bar")
             ForEach(state.processes.prefix(3)) { group in
                 HStack {

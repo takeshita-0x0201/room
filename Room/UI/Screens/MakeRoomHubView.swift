@@ -5,7 +5,7 @@ struct MakeRoomHubView: View {
     @Binding var route: PopoverRoute
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 13) {
             BackHeader(title: "Make Room", route: $route, back: .home)
 
             NavRow(icon: Image(systemName: "memorychip"), title: "Memory", showsChevron: true) {
@@ -27,7 +27,7 @@ struct MakeRoomHubView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding(16)
+        .padding(13)
     }
 
     private func hubCaption(for pressure: MemoryPressureLevel) -> String {

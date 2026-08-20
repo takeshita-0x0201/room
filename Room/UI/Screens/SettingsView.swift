@@ -30,7 +30,7 @@ struct SettingsView: View {
                 Toggle("Show Memory", isOn: $showMemory)
                 Toggle("Show Storage", isOn: $showStorage)
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 5) {
                     Text("Display")
                     ForEach(DisplayMode.allCases, id: \.rawValue) { mode in
                         displayModeRow(mode)
@@ -71,7 +71,7 @@ struct SettingsView: View {
     /// 各モードのプレビューチップ（design-system §9。固定サンプル値）
     private func previewChip(for mode: DisplayMode) -> some View {
         let sample = sampleValues(for: mode)
-        return HStack(spacing: 4) {
+        return HStack(spacing: 3) {
             Image(systemName: "memorychip")
             Text(sample.memory)
             Image(systemName: "internaldrive")
@@ -80,7 +80,7 @@ struct SettingsView: View {
         .font(.caption)
         .monospacedDigit()
         .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.vertical, 3)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
     }
 
