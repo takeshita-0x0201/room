@@ -178,6 +178,7 @@ Room アイコンのクリックで表示。幅 280–320px、高さ可変、最
 │                              │
 │ MEMORY                  72%  │
 │ 18.4 / 24 GB                 │
+│ Free      5.6 GB             │
 │ Pressure  Normal             │
 │ Swap      768 MB             │
 │                              │
