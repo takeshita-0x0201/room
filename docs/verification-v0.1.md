@@ -2,7 +2,7 @@
 
 - **日付:** 2026-08-20
 - **検証者:** 自動検証パス（Task 22 / スクリプト実行・ログ取得。UI 目視・実削除は含まない）
-- **Commit 範囲:** `162da41..77186dd`（v0.1 実装一式。HEAD = `77186dd` `ci: add build and test workflow`）
+- **Commit 範囲:** `162da41..7eb0999`（v0.1 実装一式。HEAD = `7eb0999` `fix: set v0.1.0 bundle version and voiceover display-mode wording`。本 HEAD は v0.1.0 bundle version / VoiceOver 表示文言の修正を包含する）
 - **環境:** macOS (Apple Silicon) / Xcode 26.6 (Build 17F113) / XcodeGen 2.46.0
 
 ## 自動検証結果
@@ -10,23 +10,20 @@
 | 項目 | 結果 | 詳細 / ターゲット（要件 §22） | 判定 |
 |------|------|-------------------------------|------|
 | テストスイート | 50 tests, 0 failures（0 unexpected） | `xcodegen generate` + `xcodebuild -project Room.xcodeproj -scheme Room -destination 'platform=macOS' test` → **TEST SUCCEEDED** | ✅ PASS |
-| Idle CPU | 全 6 サンプル 0.0% / 平均 0.0% | 起動後 10s 放置 → 60 秒間 10s 毎に `ps -o %cpu=`（ターゲット: 平均 < 1.0%） | ✅ PASS |
-| RSS | 平均 66.8 MB（66.45–67.08 MB） | 6 サンプル: 68688 / 68416 / 68320 / 68048 / 68544 / 68256 KB（ターゲット: < 100 MB / 数十 MB 級） | ✅ PASS |
-| ネットワーク | 接続・通信 0 | `nettop -p Room -l 2` → エントリなし（bytes_in/out 0）。`lsof -nP -p <pid> -a -i` → ソケット 0 件 | ✅ PASS |
-| Universal Binary | `x86_64 arm64` | Task 21 にて `ARCHS="arm64 x86_64"` ビルド後 `lipo -info` で両アーキテクチャ確認済み | ✅ PASS |
+| Idle CPU | 全 3 サンプル 0.0% / 平均 0.0% | 起動後 10s 放置 → 20 秒間 10s 毎に `ps -o %cpu=`（省略版再検証。ターゲット: 平均 < 1.0%） | ✅ PASS |
+| RSS | 平均 68.0 MB（66.0–71.8 MB） | 3 サンプル: 73520 / 67728 / 67568 KB（省略版再検証。ターゲット: < 100 MB / 数十 MB 級） | ✅ PASS |
+| ネットワーク | 接続・通信 0 | `lsof -a -p <pid> -i` → ソケット 0 件（エントリなし） | ✅ PASS |
+| Universal Binary | `x86_64 arm64` | `ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO CODE_SIGN_IDENTITY=-` ビルド後 `lipo -info` → `Architectures in the fat file: ... are: x86_64 arm64` | ✅ PASS |
 | 起動 / 終了 | クリーン | `open` で起動・常駐、`pkill -x Room` で終了。残存プロセスなし | ✅ PASS |
 
 ### Idle CPU / RSS サンプル生データ
 
 | # | 時刻 | CPU % | RSS (KB) |
 |---|------|-------|----------|
-| 1 | 16:15:53 | 0.0 | 68688 |
-| 2 | 16:16:03 | 0.0 | 68416 |
-| 3 | 16:16:13 | 0.0 | 68320 |
-| 4 | 16:16:24 | 0.0 | 68048 |
-| 5 | 16:16:34 | 0.0 | 68544 |
-| 6 | 16:16:44 | 0.0 | 68256 |
-| 平均 | — | **0.0** | **68378.7 KB = 66.8 MB** |
+| 1 | 16:30 台 | 0.0 | 73520 |
+| 2 | +10s | 0.0 | 67728 |
+| 3 | +20s | 0.0 | 67568 |
+| 平均 | — | **0.0** | **69605.3 KB = 68.0 MB** |
 
 ## 受け入れ条件チェックリスト（要件 §23）
 
@@ -49,7 +46,7 @@
 | 8b | Memory Make Room の UI フロー（`No action needed` 表示・選択 Quit・Potential recovery） | 人間確認待ち | フロー操作は目視確認。 |
 | 9a | Storage の安全削除候補検出（カテゴリ別スキャン・排他・サイズ集計） | 自動検証済み | `CleanupRulesTests`・`CleanupPlannerTests`（Apple Caches 除外・reverse-DNS 制限・排他・経過期間・集計）。 |
 | 9b | Storage の削除安全性（fixture での scan/delete、削除時再検証・symlink 拒否・実行中アプリ保護） | 自動検証済み | `CleanupServiceTests`・`CleanupFileOpsTests`（古いファイルのみ削除・root 維持・verifier 再検証・symlink 拒否・実行中ブロック）。 |
-| 9c | Storage Make Room の実削除（捨てデータ `~/Library/Caches/room-test-fixture/`） | 人間確認待ち | 実データ削除は人手（本検証パスでは実データ非干渉のため）。 |
+| 9c | Storage Make Room の実削除（捨てデータ `~/Library/Caches/com.example.room-test-fixture/`） | 人間確認待ち | 実データ削除は人手（本検証パスでは実データ非干渉のため）。fixture ディレクトリはジェネリックキャッシュスキャンに載るよう reverse-DNS 名を付けること。 |
 | 10 | Settings（Launch at Login トグル / Show / Display モード・プレビュー / Refresh Interval）の実動作 | 人間確認待ち | Launch at Login トグル実動作ほかは目視・実操作確認。 |
 | 11 | Light / Dark Mode・VoiceOver 一巡・キーボードナビゲーション | 人間確認待ち | 見た目と読み上げ・キーボード操作は目視確認。 |
 | — | Memory Make Room 完成条件（Normal 時 `No action needed` / Warning・Critical 時 特定表示・選択 Quit） | 人間確認待ち | 表示・操作フローは目視確認（Pressure 判定ロジックのみ自動検証済み）。 |
@@ -71,3 +68,5 @@
 | H3 | ライセンス最終承認（MIT 提案） | **未決**（要ユーザー判断） |
 | H4 | GitHub リポジトリ公開・初回 Release | **未決**（要ユーザー判断） |
 | H5 | Xcode 16+ 導入・`xcode-select -s` | **解消済み** — Xcode 26.6（Build 17F113）/ Developer path = `/Applications/Xcode.app/Contents/Developer` を確認（本検証パスで `xcodebuild`・`xcodegen` 動作） |
+
+> 追記: 本レコードは HEAD `77186dd` 時点の自動検証結果（ebc9555 で記録）を、HEAD `7eb0999`（v0.1.0 bundle version / VoiceOver 文言修正後）で再実行して更新したもの。
