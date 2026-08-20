@@ -17,6 +17,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.takeshita.Room   # H2: ユーザー確定待ち。変更はここ 1 箇所
         SWIFT_OBJC_BRIDGING_HEADER: Room/Support/Room-Bridging-Header.h
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     info:
       path: Room/Info.plist
       properties:
