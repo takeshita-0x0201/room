@@ -59,8 +59,9 @@
 ## 6. メインポップオーバー
 
 - **ヘッダー**: Room アイコン + `Room` + 右端に歯車（Settings ショートカット）
-- **MEMORY / STORAGE の 2 カラムカード**:
-  - 見出し（太字）+ 右に `%`
+- **Memory / Storage の 2 カラムカード**:
+  - 見出しは **Title Case・太字なし・本文サイズ**（アイコンと文字を同サイズで並べる。2026-08-20 フィードバック）+ 右に `%`
+  - ヘッダーの Room アイコン（22pt）+ "Room"（title3 semibold）はひと回り大きく
   - **使用率プログレスバー**（Memory=ブルー / Storage=グリーン、細め・角丸）
   - `used / total`
   - Memory 側: `Pressure <状態>`（状態語は状態色）+ `Swap`

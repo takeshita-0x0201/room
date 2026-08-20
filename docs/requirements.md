@@ -200,7 +200,8 @@ Room アイコンのクリックで表示。幅 280–320px、高さ可変、最
 ╰──────────────────────────────╯
 ```
 
-- セクション見出し（MEMORY / STORAGE / TOP PROCESSES）はアイコン付き・太字強調とする（v0.1 実機フィードバック反映） **[v1.1 修正]**
+- セクション見出し（Memory / Storage / Top Processes）はアイコン付き・**Title Case・太字なし・本文サイズ**（文字とアイコンは同サイズ）とする（v0.1 実機フィードバック反映） **[v1.2 修正]**
+- Popover ヘッダーの Room アイコンとサービス名 "Room" はひと回り大きく表示する **[v1.2 修正]**
 - Make Room / Processes は Popover 内でのプッシュ遷移（1 階層）
 - Settings は独立ウィンドウ（macOS 標準）
 - Top Processes は RAM 使用量上位 3 グループ。表示はアプリ / プロセス名 + RAM 使用量のみ（CPU 等は出さない）
