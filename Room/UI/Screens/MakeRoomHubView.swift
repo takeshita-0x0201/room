@@ -23,7 +23,7 @@ struct MakeRoomHubView: View {
             NavRow(systemImage: "internaldrive", title: "Storage", showsChevron: true) {
                 route = .storageMakeRoom
             }
-            Text("Scan for cleanable files")
+            Text(storageCaption)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -36,5 +36,12 @@ struct MakeRoomHubView: View {
         case .warning, .critical: "Pressure \(pressure.rawValue)"
         case .unavailable: "Pressure unavailable"
         }
+    }
+
+    private var storageCaption: String {
+        if let bytes = state.lastCleanupReadyBytes, bytes > 0 {
+            return "\(ByteText.long(bytes, base: .storage1000)) cleanable"
+        }
+        return "Scan for cleanable files"
     }
 }

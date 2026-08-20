@@ -36,6 +36,7 @@ struct HomeView: View {
             if let m = state.memory {
                 Text(ByteText.pair(used: m.usedBytes, total: m.totalBytes, base: .memory1024))
                     .font(.callout).monospacedDigit()
+                StatRow(label: "Free", value: ByteText.long(m.freeBytes, base: .memory1024))
                 StatRow(label: "Pressure", value: m.pressure.rawValue, valueColor: m.pressure.color)
                 StatRow(label: "Swap", value: ByteText.long(m.swapUsedBytes, base: .memory1024))
             }

@@ -40,11 +40,9 @@ final class CleanupServiceTests: XCTestCase {
         CleanupService(rules: rules, storage: StorageStub(), runningApps: { running })
     }
 
-    private func item(_ id: String, target: CleanupTarget, allowedRoots: [URL]) -> CleanupItem {
+    private func item(_ id: String, target: CleanupTarget) -> CleanupItem {
         CleanupItem(id: id, title: id, summaryGroup: .caches,
-                    targets: [target], allowedRoots: allowedRoots,
-                    blockingBundleIDs: [], minFileAge: nil,
-                    sizeBytes: 1, state: .ready)
+                    targets: [target], sizeBytes: 1, state: .ready)
     }
 
     func testDeleteRemovesContentsOfVerifiedTarget() async throws {
@@ -53,7 +51,7 @@ final class CleanupServiceTests: XCTestCase {
         let target = try XCTUnwrap(CleanupTargetVerifier.makeTarget(root, fileManager: .default))
         let sut = service(rules: [rule("r", roots: [root])])
 
-        let outcome = await sut.delete([item("r", target: target, allowedRoots: [root])])
+        let outcome = await sut.delete([item("r", target: target)])
 
         XCTAssertGreaterThan(outcome.deletedBytes, 0)
         XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
@@ -67,7 +65,7 @@ final class CleanupServiceTests: XCTestCase {
         let sut = service(rules: [rule("r", roots: [root], blocking: ["com.blocker.app"])],
                           running: [RunningApp(bundleID: "com.blocker.app", name: "Blocker")])
 
-        let outcome = await sut.delete([item("r", target: target, allowedRoots: [root])])
+        let outcome = await sut.delete([item("r", target: target)])
 
         XCTAssertEqual(outcome.deletedBytes, 0)
         XCTAssertTrue(FileManager.default.fileExists(atPath: file.path))   // 何も消えていない
@@ -88,7 +86,7 @@ final class CleanupServiceTests: XCTestCase {
         let target = try XCTUnwrap(CleanupTargetVerifier.makeTarget(escaped, fileManager: .default))
         let sut = service(rules: [rule("r", roots: [allowed])])
 
-        let outcome = await sut.delete([item("r", target: target, allowedRoots: [allowed])])
+        let outcome = await sut.delete([item("r", target: target)])
 
         XCTAssertEqual(outcome.deletedBytes, 0)
         XCTAssertTrue(FileManager.default.fileExists(atPath: victim.path))   // 領域外は無傷
@@ -96,14 +94,14 @@ final class CleanupServiceTests: XCTestCase {
     }
 
     func testDeleteIgnoresForgedItemsWithUnknownRuleID() async throws {
-        // 呼び出し側が偽の allowedRoots を持つ item を渡しても、
-        // サービスの rules に無い ID は削除されない（多層防御）
+        // 呼び出し側がルールに無い ID で forged した item を渡しても、
+        // サービスの rules に無い ID は削除されない（多層防御 — ID 以外は信用しない）
         let root = fixture.appendingPathComponent("cache")
         let file = try makeFile("cache/x.bin")
         let target = try XCTUnwrap(CleanupTargetVerifier.makeTarget(root, fileManager: .default))
         let sut = service(rules: [])   // ルール無し
 
-        let outcome = await sut.delete([item("forged", target: target, allowedRoots: [root])])
+        let outcome = await sut.delete([item("forged", target: target)])
 
         XCTAssertEqual(outcome.deletedBytes, 0)
         XCTAssertTrue(FileManager.default.fileExists(atPath: file.path))

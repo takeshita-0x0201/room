@@ -29,8 +29,7 @@ final class CleanupRulesTests: XCTestCase {
     func testSummaryTotals() {
         func item(_ id: String, _ group: CleanupSummaryGroup, _ bytes: UInt64) -> CleanupItem {
             CleanupItem(id: id, title: id, summaryGroup: group, targets: [],
-                        allowedRoots: [], blockingBundleIDs: [],
-                        minFileAge: nil, sizeBytes: bytes, state: .ready)
+                        sizeBytes: bytes, state: .ready)
         }
         let items = [item("a", .caches, 100), item("b", .caches, 50), item("c", .developer, 70)]
         let totals = CleanupSummary.totals(items)

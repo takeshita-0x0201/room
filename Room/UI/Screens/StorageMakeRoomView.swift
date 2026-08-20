@@ -168,6 +168,7 @@ struct StorageMakeRoomView: View {
             let items = await cleanup.scan()
             if Task.isCancelled { return }
             phase = .results(items)
+            state.lastCleanupReadyBytes = CleanupSummary.grandTotal(items.filter { $0.state == .ready })
         }
     }
 
@@ -185,6 +186,7 @@ struct StorageMakeRoomView: View {
             let outcome = await cleanup.delete(selected)
             Self.isCleaning = false
             phase = .done(outcome)
+            state.lastCleanupReadyBytes = nil
             state.refreshStats()
         }
     }

@@ -48,8 +48,7 @@ final class CleanupService: CleanupScanning, CleanupDeleting {
                 if (try? fm.contentsOfDirectory(atPath: root.path)) == nil {
                     items.append(CleanupItem(
                         id: rule.id, title: rule.title, summaryGroup: rule.summaryGroup,
-                        targets: [], allowedRoots: rule.roots, blockingBundleIDs: [],
-                        minFileAge: nil, sizeBytes: 0,
+                        targets: [], sizeBytes: 0,
                         state: .needsFullDiskAccess))
                     continue
                 }
@@ -83,10 +82,7 @@ final class CleanupService: CleanupScanning, CleanupDeleting {
             }
             items.append(CleanupItem(
                 id: rule.id, title: rule.title, summaryGroup: rule.summaryGroup,
-                targets: targets, allowedRoots: rule.roots,
-                blockingBundleIDs: rule.blockingBundleIDs,
-                minFileAge: rule.minFileAge,
-                sizeBytes: size, state: state))
+                targets: targets, sizeBytes: size, state: state))
         }
         return items
     }
@@ -98,7 +94,7 @@ final class CleanupService: CleanupScanning, CleanupDeleting {
         let now = Date()
         let fm = FileManager.default
         for item in items where item.state == .ready {
-            // 呼び出し側の allowedRoots / 条件は信用しない。
+            // 呼び出し側の item が直接持つ値（ID・targets・sizeBytes）は信用せず、
             // ルート・age・ブロッカーはサービス自身の rules から ID で再導出する（多層防御）
             guard let rule = rules.first(where: { $0.id == item.id }) else {
                 skipped.append(contentsOf: item.targets.map(\.url.path))

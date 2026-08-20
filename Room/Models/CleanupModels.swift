@@ -26,6 +26,8 @@ struct CleanupTarget: Equatable {
     let deviceNumber: Int
 }
 
+/// 削除時の許可ルート・age・ブロッカーは item ではなく CleanupService が
+/// 自身の rules から ID で再導出する（多層防御 — item 側の値は安全境界ではない）。
 struct CleanupItem: Identifiable, Equatable {
     enum State: Equatable {
         case ready
@@ -37,9 +39,6 @@ struct CleanupItem: Identifiable, Equatable {
     let title: String
     let summaryGroup: CleanupSummaryGroup
     let targets: [CleanupTarget]           // 「この中身を消す」対象ディレクトリ群
-    let allowedRoots: [URL]                // 削除直前にこの配下であることを再検証（ルールの roots）
-    let blockingBundleIDs: [String]        // 削除直前の実行中アプリ再判定に使う
-    let minFileAge: TimeInterval?
     let sizeBytes: UInt64
     let state: State
 }

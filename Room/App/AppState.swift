@@ -11,6 +11,9 @@ final class AppState {
     var memory: MemorySnapshot?
     var storage: StorageSnapshot?
     var processes: [ProcessGroup] = []
+    /// 直近の Storage スキャンで「今すぐ削除可能」だった合計（要件 §16 のハブ表示用）。
+    /// Clean 実行後は nil に戻し、次回スキャンまで静的表示にする。
+    var lastCleanupReadyBytes: UInt64?
     var isPopoverVisible = false {
         didSet {
             if isPopoverVisible {
