@@ -20,9 +20,7 @@ enum MenuBarLabelRenderer {
                 .withSymbolConfiguration(symbolConfiguration)
         }
 
-        var segments: [(icon: NSImage?, text: NSAttributedString?)] = [
-            (RoomIcon.menuBarImage(pointSize: 16), nil)
-        ]
+        var segments: [(icon: NSImage?, text: NSAttributedString?)] = []
         if let memory {
             segments.append((symbol("memorychip"),
                              NSAttributedString(string: memory, attributes: textAttributes)))
@@ -30,6 +28,10 @@ enum MenuBarLabelRenderer {
         if let storage {
             segments.append((symbol("internaldrive"),
                              NSAttributedString(string: storage, attributes: textAttributes)))
+        }
+        // 両方 OFF のときはラベルが空になりクリック不能になるため、Room アイコンのみ表示
+        if segments.isEmpty {
+            segments = [(RoomIcon.menuBarImage(pointSize: 16), nil)]
         }
 
         var width: CGFloat = 0
