@@ -1,0 +1,42 @@
+name: Room
+options:
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGNING_REQUIRED: "YES"
+targets:
+  Room:
+    type: application
+    platform: macOS
+    sources: [Room]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.takeshita.Room   # H2: ユーザー確定待ち。変更はここ 1 箇所
+        SWIFT_OBJC_BRIDGING_HEADER: Room/Support/Room-Bridging-Header.h
+    info:
+      path: Room/Info.plist
+      properties:
+        CFBundleDisplayName: Room
+        LSUIElement: true
+        NSHumanReadableCopyright: ""
+  RoomTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [RoomTests]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+    dependencies:
+      - target: Room
+schemes:
+  Room:
+    build:
+      targets:
+        Room: all
+        RoomTests: [test]
+    test:
+      targets: [RoomTests]
