@@ -2,23 +2,32 @@ import SwiftUI
 
 @main
 struct RoomApp: App {
+    @State private var appState: AppState
+
     init() {
         UserDefaults.standard.register(defaults: [
-            SettingsKey.displayMode: "percentage",
+            SettingsKey.displayMode: DisplayMode.percentage.rawValue,
             SettingsKey.showMemory: true,
             SettingsKey.showStorage: true,
             SettingsKey.refreshInterval: 5,
         ])
+        _appState = State(initialValue: AppState())
     }
 
     var body: some Scene {
         MenuBarExtra {
-            Text("Room")
-                .padding()
+            PopoverRootView()
+                .environment(appState)
         } label: {
-            Image(systemName: "cube.transparent")
+            MenuBarLabel()
+                .environment(appState)
         }
         .menuBarExtraStyle(.window)
+
+        Settings {
+            SettingsView()
+                .environment(appState)
+        }
     }
 }
 
