@@ -17,17 +17,23 @@ final class MemoryService: MemoryStatsProviding {
     }
 
     static func readVMStats() -> RawMemoryStats? {
+        // mach_host_self() は send right を返すため、毎回 deallocate しないと
+        // 長期常駐でポート参照がリークする
+        let host = mach_host_self()
+        defer { mach_port_deallocate(mach_task_self_, host) }
+
         var stats = vm_statistics64()
         var count = mach_msg_type_number_t(
             MemoryLayout<vm_statistics64>.stride / MemoryLayout<integer_t>.stride)
         let result = withUnsafeMutablePointer(to: &stats) { pointer in
             pointer.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                host_statistics64(mach_host_self(), HOST_VM_INFO64, $0, &count)
+                host_statistics64(host, HOST_VM_INFO64, $0, &count)
             }
         }
         guard result == KERN_SUCCESS else { return nil }
         var pageSize: vm_size_t = 0
-        host_page_size(mach_host_self(), &pageSize)
+        // pageSize 0 のまま進むと「使用量 0」の偽装正常値になるため失敗は nil
+        guard host_page_size(host, &pageSize) == KERN_SUCCESS, pageSize > 0 else { return nil }
         return RawMemoryStats(
             internalPages: UInt64(stats.internal_page_count),
             purgeablePages: UInt64(stats.purgeable_count),
