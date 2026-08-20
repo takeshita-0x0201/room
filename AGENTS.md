@@ -1,44 +1,39 @@
-# Room — Agent 向けガイド
+# Room — Agent Guide
 
-このドキュメントは、Room の開発に関わるすべてのエージェント（Claude / Codex 等、ツール非依存）が
-最初に読むべき共通ルールを定義する。
+This document defines the common rules that every agent involved in Room development (Claude / Codex, etc., tool-agnostic) should read first.
 
-## 1. プロジェクト概要
+## 1. Project Overview
 
 **Room — See what's full. Make room.**
 
-Room は、macOS のメニューバー常駐で **RAM / SSD の状態を一目で確認**し、必要なときだけ
-**安全にクリーンアップ（Make Room）**できる軽量な OSS アプリである。
+Room is a lightweight OSS app that lives in the macOS menu bar, lets you see **RAM / SSD status at a glance**, and lets you **clean up safely (Make Room)** only when needed.
 
-Room は RAM クリーナーではない。「RAM をたくさん使っている」と「RAM が本当に不足している」を
-区別し、Memory Pressure を主要指標とする。
+Room is not a RAM cleaner. It distinguishes "using a lot of RAM" from "actually running low on RAM" and treats Memory Pressure as the primary metric.
 
-設計原則:
+Design principles:
 
-1. **Glanceable** — メニューバーを見るだけで RAM / SSD の状態を把握できる
-2. **Simple** — 情報量・操作・設定・画面遷移を必要最小限にする
-3. **Make Room** — Memory は「Pressure 診断 → 不要な高メモリプロセスの終了」、
-   Storage は「再生成可能データの検出 → ユーザー確認の上で削除」
-4. **Extensible** — 本体は小さく保ち、RAM / SSD 以外は将来の Module / Extension とする
+1. **Glanceable** — see RAM / SSD status at a glance from the menu bar
+2. **Simple** — keep information, actions, settings, and screen navigation to the necessary minimum
+3. **Make Room** — Memory: "Pressure diagnosis → quit unneeded high-memory processes"; Storage: "detect regenerable data → delete with user confirmation"
+4. **Extensible** — keep the core small; everything beyond RAM / SSD becomes future Modules / Extensions
 
-## 2. 必読ドキュメント
+## 2. Required Reading
 
-実装に着手する前に、必ず以下を読むこと。
+Read the following before starting any implementation.
 
-- `docs/requirements.md` — 要件定義書 v1.1。指標定義（§6）、権限モデル（§5）、
-  プロセス保護ルール（§15）、クリーンアップ仕様（§17〜18）などを含む。
-- `docs/superpowers/plans/2026-08-20-room-mvp.md` — 実装計画。タスク分解と担当モデルの割り当てを含む。
+- `docs/requirements.md` — requirements specification v1.1. Includes metric definitions (§6), permission model (§5), process protection rules (§15), cleanup specification (§17–18), and more.
+- `docs/superpowers/plans/2026-08-20-room-mvp.md` — implementation plan. Includes task decomposition and assigned model per task.
 
-**仕様判断に迷った場合は `docs/requirements.md` を正とする。**
+**When in doubt about a specification decision, `docs/requirements.md` is authoritative.**
 
-## 3. ビルド・テスト
+## 3. Build & Test
 
-前提:
+Prerequisites:
 
-- Xcode 16 以上
+- Xcode 16 or later
 - `brew install xcodegen`
 
-`.xcodeproj` は XcodeGen による生成物であり、**コミットしない**（`project.yml` が正）。
+`.xcodeproj` is a generated artifact of XcodeGen and is **not committed** (`project.yml` is the source of truth).
 
 ```bash
 xcodegen generate
@@ -46,56 +41,56 @@ xcodebuild -project Room.xcodeproj -scheme Room -destination 'platform=macOS' bu
 xcodebuild -project Room.xcodeproj -scheme Room -destination 'platform=macOS' test
 ```
 
-## 4. リポジトリ構成
+## 4. Repository Structure
 
-| パス | 内容 |
+| Path | Contents |
 |------|------|
-| `project.yml` | XcodeGen 定義。プロジェクト構成の正。 |
-| `Room/App` | エントリポイント（`RoomApp` / `MenuBarExtra`）・`AppState`。 |
-| `Room/Core` | 純粋ロジック: フォーマッタ・集約・保護ポリシー・クリーンアップルール。Foundation のみに依存し、ユニットテスト必須。 |
-| `Room/Models` | `MemorySnapshot` / `StorageSnapshot` / `ProcessGroup` / `CleanupItem` などのデータモデル。 |
-| `Room/Services` | システム API 隔離層（mach, sysctl, libproc, FileManager）。protocol + 実装で分離する。 |
-| `Room/UI` | `Components`（再利用ビュー）/ `Screens`（Popover・Processes・MakeRoom・Cleanup・Settings）/ `Icons`。 |
-| `Room/Support` | Bridging Header（libproc 等）、定数。 |
-| `RoomTests/` | ユニットテスト。 |
+| `project.yml` | XcodeGen definition. Source of truth for the project configuration. |
+| `Room/App` | Entry point (`RoomApp` / `MenuBarExtra`) and `AppState`. |
+| `Room/Core` | Pure logic: formatters, aggregation, protection policy, cleanup rules. Depends only on Foundation; unit tests required. |
+| `Room/Models` | Data models such as `MemorySnapshot` / `StorageSnapshot` / `ProcessGroup` / `CleanupItem`. |
+| `Room/Services` | System API isolation layer (mach, sysctl, libproc, FileManager). Separated into protocol + implementation. |
+| `Room/UI` | `Components` (reusable views) / `Screens` (Popover, Processes, MakeRoom, Cleanup, Settings) / `Icons`. |
+| `Room/Support` | Bridging Header (libproc, etc.), constants. |
+| `RoomTests/` | Unit tests. |
 
-## 5. コーディング規約
+## 5. Coding Conventions
 
-- Swift 5.9+ / SwiftUI を優先する（AppKit は必要箇所のみ）。
-- ランタイム外部依存はゼロ。SwiftPM 依存の追加を禁止する。
-- View にシステム取得処理を直接書かない。必ず `Room/Services` 経由でアクセスする。
-- `Room/Core` は TDD（テスト先行）で実装する。
-- UI 文字列は英語で統一する。
-- 数値表示は等幅数字（monospaced digits）を使う。
-- RAM の表示は 1024 基数、ストレージの表示は 1000 基数とする（`docs/requirements.md` §6 参照）。
+- Prefer Swift 5.9+ / SwiftUI (AppKit only where necessary).
+- Zero runtime external dependencies. Adding SwiftPM dependencies is prohibited.
+- Never write system acquisition code directly in Views. Always access via `Room/Services`.
+- Implement `Room/Core` with TDD (test-first).
+- UI strings are in English.
+- All project content — documents, code comments, commit messages, UI strings — is written in English.
+- Use monospaced digits for numeric display.
+- RAM is displayed in base 1024, storage in base 1000 (see `docs/requirements.md` §6).
 
-## 6. 絶対的な禁止事項
+## 6. Absolute Prohibitions
 
-- ネットワーク通信コードの追加（Analytics / Telemetry / 自動アップデートを含む）は一切禁止。
-- ユーザー確認なしのファイル削除ロジックは禁止（Review フロー必須）。
-- プロセス保護ルール（`docs/requirements.md` §15）の緩和禁止。
-- App Sandbox の有効化禁止（プロセス列挙が壊れる）。
-- テストで実ユーザーデータ（`~/Library` 等）に書き込み・削除する行為は禁止。
-  必ずテンポラリのフィクスチャディレクトリを使うこと。
+- No network communication code (including Analytics / Telemetry / auto-update) may be added.
+- No file deletion logic without user confirmation (Review flow required).
+- The process protection rules (`docs/requirements.md` §15) may not be relaxed.
+- App Sandbox must not be enabled (breaks process enumeration).
+- Tests must not write to or delete real user data (`~/Library`, etc.). Always use a temporary fixture directory.
 
-## 7. Git 規約
+## 7. Git Conventions
 
-- Conventional Commits（`feat:` / `fix:` / `test:` / `docs:` / `chore:`）に従う。
-- タスク単位の小さいコミットにする。
-- コミットメッセージ末尾に以下のトレーラを付ける。
+- Follow Conventional Commits (`feat:` / `fix:` / `test:` / `docs:` / `chore:`).
+- Make small commits per task.
+- Append the following trailer at the end of commit messages.
 
   ```
   Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
   ```
 
-- 初期開発中は main へ直接コミットする。
-- push はユーザーの指示があるまで行わない。
+- Commit directly to main during early development.
+- Do not push until instructed by the user.
 
 ## 8. Definition of Done
 
-タスクは以下をすべて満たした場合にのみ完了とする。
+A task is complete only when all of the following are satisfied.
 
-- 該当タスクのテストが green（`xcodebuild test` が通過する）。
-- ビルド警告を増やさない。
-- プレースホルダ（TODO・仮実装）を残さない。
-- `docs/requirements.md` の該当受け入れ条件を満たす。
+- The task's tests are green (`xcodebuild test` passes).
+- No new build warnings.
+- No placeholders (TODO, stub implementations) left behind.
+- The corresponding acceptance criteria in `docs/requirements.md` are satisfied.

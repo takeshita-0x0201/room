@@ -1,65 +1,65 @@
-# Room 要件定義書 v1.1
+# Room Requirements Specification v1.1
 
 > **Room — See what's full. Make room.**
-> macOS のメニューバー上で RAM と SSD の状態を一目で確認し、必要なときだけ安全に空きを作れる軽量 OSS アプリ。
+> A lightweight OSS app that shows RAM and SSD status at a glance in the macOS menu bar and safely frees up space only when needed.
 
-本書は v1.0 Final を実装可能なレベルまで精査・具体化した改訂版である。
-v1.0 からの変更点はすべて **[v1.1 決定]** マーカーで明示する。設計思想・UI 方針は v1.0 を踏襲する。
+This document is a revision that scrutinizes and elaborates the v1.0 Final to an implementable level.
+All changes from v1.0 are marked with the **[v1.1 decision]** marker. The design philosophy and UI policy follow v1.0.
 
 ---
 
-## 0. 精査サマリー（v1.0 → v1.1 の変更理由）
+## 0. Review Summary (Reasons for v1.0 → v1.1 Changes)
 
-v1.0 は思想・UI とも明確だが、実装に進むには以下のカテゴリの未定義事項があった。
+v1.0 is clear in both philosophy and UI, but the following categories of undefined items remained before implementation could proceed.
 
-| # | 問題 | v1.1 での対応 |
+| # | Issue | Resolution in v1.1 |
 |---|------|--------------|
-| 1 | App Sandbox の扱いが未定義。プロセス列挙・他アプリ終了・キャッシュ削除は Sandbox 下では不可能 | **非 Sandbox** と決定。Mac App Store 配布不可 → GitHub Releases 配布（§4） |
-| 2 | TCC（macOS プライバシー保護）の権限モデルが未定義。`~/.Trash` は Full Disk Access 必須、Safari キャッシュは TCC 保護 | 権限モデルの章を新設（§5）。Trash は FDA 前提のオプトイン、Safari はスコープ外 |
-| 3 | 最低対応 macOS バージョン未定義 | **macOS 14.0 (Sonoma) 以降**に決定（§4） |
-| 4 | 「RAM 使用率」の算出式が未定義（macOS は空き RAM をキャッシュに積極利用するため free/total は不適切） | Activity Monitor 準拠の式を定義（§6.1） |
-| 5 | SSD 空き容量の算出方法が未定義（APFS の purgeable 領域の扱い） | Finder 一致の `volumeAvailableCapacityForImportantUsage` に決定（§6.2） |
-| 6 | プロセス表示の集計単位が未定義。Chrome 等は多数の Helper プロセスに分かれ、素朴に列挙すると仕様の意図（"Chrome 3.2 GB"）と乖離 | .app バンドル単位で集約するルールを定義（§6.3） |
-| 7 | Quit の実装経路が GUI アプリと非 GUI プロセス（node 等）で異なる点が未定義 | 2 経路（`NSRunningApplication` / シグナル）を定義（§14） |
-| 8 | Quit は「要求」であり保証されない（未保存ダイアログでブロックされ得る）ことへの UI が未定義 | タイムアウト後のフォロー UI を定義（§14.3） |
-| 9 | 保護プロセスの判定基準が抽象的 | 判定ルールを具体化（§15） |
-| 10 | クリーンアップの二重計上リスク（Yarn/Homebrew/CocoaPods 等のキャッシュは `~/Library/Caches` 配下にあり、Caches と Developer の両カテゴリに該当） | カテゴリ間の排他ルールを定義（§17.4） |
-| 11 | 実行中ブラウザのキャッシュ削除はデータ破損リスク | 実行中アプリのキャッシュはスキップするルールを定義（§17.5） |
-| 12 | Docker キャッシュ削除は docker CLI への外部依存＋デーモン起動状態依存 | **v0.2 へ繰り延べ**（§20） |
-| 13 | Review カテゴリ（Downloads 巨大ファイル・重複検出）は §35 MVP リストに含まれておらず、重複検出は高コスト | **v0.2 へ繰り延べ**（§20） |
-| 14 | 削除方式が未定義（ゴミ箱移動では空き容量が増えない） | Review 確認を必須とした上で**完全削除**に決定（§17.6） |
-| 15 | 「古い Logs」の閾値が未定義 | 最終更新 7 日超に決定（§17.3） |
+| 1 | App Sandbox handling undefined. Process enumeration, terminating other apps, and cache deletion are impossible under Sandbox | Decided **non-Sandbox**. Mac App Store distribution not possible → GitHub Releases distribution (§4) |
+| 2 | TCC (macOS privacy protection) permission model undefined. `~/.Trash` requires Full Disk Access; Safari cache is TCC-protected | New permission model section (§5). Trash is opt-in with FDA; Safari is out of scope |
+| 3 | Minimum supported macOS version undefined | Decided **macOS 14.0 (Sonoma) or later** (§4) |
+| 4 | RAM usage formula undefined (macOS actively uses free RAM for cache, so free/total is inappropriate) | Defined Activity Monitor-compliant formula (§6.1) |
+| 5 | SSD free space calculation method undefined (handling of APFS purgeable space) | Decided on Finder-matching `volumeAvailableCapacityForImportantUsage` (§6.2) |
+| 6 | Process display aggregation unit undefined. Chrome etc. splits into many Helper processes; naive enumeration diverges from the spec's intent ("Chrome 3.2 GB") | Defined aggregation by .app bundle (§6.3) |
+| 7 | Quit implementation path differs between GUI apps and non-GUI processes (node, etc.) — undefined | Defined two paths (`NSRunningApplication` / signal) (§14) |
+| 8 | UI for the fact that Quit is a "request" and not guaranteed (can be blocked by unsaved-changes dialogs) undefined | Defined follow-up UI after timeout (§14.3) |
+| 9 | Protection process criteria abstract | Elaborated the judgment rules (§15) |
+| 10 | Cleanup double-counting risk (Yarn/Homebrew/CocoaPods caches live under `~/Library/Caches` and qualify for both the Caches and Developer categories) | Defined mutual-exclusion rules between categories (§17.4) |
+| 11 | Deleting a running browser's cache risks data corruption | Defined rule to skip caches of running apps (§17.5) |
+| 12 | Docker cache deletion depends on the external docker CLI + daemon running state | **Deferred to v0.2** (§20) |
+| 13 | Review category (large Downloads files, duplicate detection) not in the §35 MVP list; duplicate detection is high-cost | **Deferred to v0.2** (§20) |
+| 14 | Deletion method undefined (moving to the Trash doesn't increase free space) | Decided **permanent deletion** with mandatory Review confirmation (§17.6) |
+| 15 | "Old Logs" threshold undefined | Decided last modified more than 7 days (§17.3) |
 
-軽微な決定（§21 決定事項一覧に集約）: UI 言語は英語 / 等幅数字 / Show Memory・Storage 両 OFF 時はアイコンのみ / RAM は 1024 基数・SSD は 1000 基数表示 / 自動アップデート機構なし 等。
+Minor decisions (consolidated in the §21 decision list): UI language English / monospaced digits / icon only when both Show Memory and Show Storage are OFF / RAM in base 1024, SSD in base 1000 / no auto-update mechanism, etc.
 
-**結論: v1.0 の思想・UI・スコープは実装可能。上記の具体化を行った本書 v1.1 を実装のベースラインとする。**
+**Conclusion: v1.0's philosophy, UI, and scope are implementable. This v1.1 document, with the above elaborations, is the implementation baseline.**
 
 ---
 
-## 1. プロダクト概要
+## 1. Product Overview
 
-**Room** は、macOS のメニューバー上で **RAM と SSD の状態を一目で確認し、必要なときだけ安全に空きを作れる** 軽量なオープンソースアプリケーション。
+**Room** is a lightweight open-source application that shows **RAM and SSD status at a glance in the macOS menu bar and safely frees up space only when needed**.
 
-Room は高機能なシステムモニターや総合クリーナーを目指さない。ユーザーが知りたいことを最小限の UI で提示する。
+Room does not aim to be a feature-rich system monitor or all-in-one cleaner. It presents what the user wants to know with a minimal UI.
 
-- RAM は今どの程度使われているか / 本当に不足しているか
-- SSD はどの程度使われているか / 空きはいくらか
-- 何が RAM を圧迫しているか
-- 安全にどれくらい空きを作れるか
+- How much RAM is being used now / whether it is actually running low
+- How much of the SSD is used / how much free space there is
+- What is pressuring the RAM
+- How much space can be safely freed
 
-## 2. 設計原則
+## 2. Design Principles
 
-1. **Glanceable** — メニューバーを見るだけで RAM / SSD の状態を把握できる
-2. **Simple** — 情報量・操作・設定・画面遷移を必要最小限にする
-3. **Make Room** — Memory は「Pressure 診断 → 不要な高メモリプロセスの終了」、Storage は「再生成可能データの検出 → ユーザー確認の上で削除」
-4. **Extensible** — 本体は小さく保ち、RAM / SSD 以外は将来の Module / Extension とする
+1. **Glanceable** — see RAM / SSD status at a glance from the menu bar
+2. **Simple** — keep information, actions, settings, and screen navigation to the necessary minimum
+3. **Make Room** — Memory: "Pressure diagnosis → terminate unneeded high-memory processes"; Storage: "detect regenerable data → delete with user confirmation"
+4. **Extensible** — keep the core small; everything beyond RAM / SSD becomes future Modules / Extensions
 
-Room は RAM クリーナーではない。「RAM をたくさん使っている」と「RAM が足りていない」を区別し、Memory Pressure を主要指標とする。
+Room is not a RAM cleaner. It distinguishes "using a lot of RAM" from "actually running low on RAM" and treats Memory Pressure as the primary metric.
 
-## 3. プロダクト境界
+## 3. Product Boundaries
 
 ```text
-Room Core                     Extensions（将来）
+Room Core                     Extensions (future)
 ├── Memory Monitor            ├── CPU / GPU / Battery
 ├── Storage Monitor           ├── Network / Docker
 ├── Process Monitor           ├── Temperature
@@ -68,112 +68,112 @@ Room Core                     Extensions（将来）
     └── Storage
 ```
 
-v0.1 では Plugin Runtime は作らない。内部構造（Service プロトコル分離）だけモジュール追加しやすくする。
+In v0.1, no Plugin Runtime is built. Only the internal structure (Service protocol separation) makes it easy to add modules later.
 
-## 4. 対象環境・配布 **[v1.1 決定]**
+## 4. Target Environment & Distribution **[v1.1 decision]**
 
-| 項目 | 決定 | 理由 |
+| Item | Decision | Reason |
 |------|------|------|
-| 最低 OS | **macOS 14.0 (Sonoma)** | SwiftUI `MenuBarExtra` の popover 開閉検知・`@Observable`・`openSettings` 環境値が 14+。Intel Mac も Sonoma 対応機種（2018 年以降の大半）をカバー |
-| アーキテクチャ | Universal Binary (arm64 + x86_64) | Apple Silicon 優先、Intel も同一コードで対応可能 |
-| 言語 / UI | Swift 5.9+ / SwiftUI（必要箇所のみ AppKit） | 仕様通り |
-| App Sandbox | **無効** | プロセス列挙（libproc）・他アプリの終了・`~/Library/Caches` 削除は Sandbox 下で不可能 |
-| 配布 | GitHub Releases（.zip / .dmg）。Mac App Store は**不可**（非 Sandbox のため） | OSS 方針と整合 |
-| 署名 | Developer ID + Notarization を推奨。**署名 ID の有無・取得はユーザー（人間）確認事項** | 未署名でも OSS としてビルド可能（Gatekeeper 警告は README に記載） |
-| Dock | アイコンなし（`LSUIElement = true`）、メニューバー常駐 | 仕様通り |
-| ネットワーク | 通信ゼロ。Analytics / Telemetry / 自動アップデートなし。更新は GitHub Releases 手動 | Privacy 原則（§19） |
+| Minimum OS | **macOS 14.0 (Sonoma)** | SwiftUI `MenuBarExtra` popover open/close detection, `@Observable`, and the `openSettings` environment value require 14+. Also covers Intel Macs supported by Sonoma (most models from 2018 onward) |
+| Architecture | Universal Binary (arm64 + x86_64) | Apple Silicon first; Intel also supportable with the same code |
+| Language / UI | Swift 5.9+ / SwiftUI (AppKit only where necessary) | As specified |
+| App Sandbox | **Disabled** | Process enumeration (libproc), terminating other apps, and deleting `~/Library/Caches` are impossible under Sandbox |
+| Distribution | GitHub Releases (.zip / .dmg). Mac App Store **not possible** (non-Sandbox) | Consistent with OSS policy |
+| Signing | Developer ID + Notarization recommended. **Whether/how to obtain a signing ID is a user (human) confirmation item** | Buildable as OSS even unsigned (Gatekeeper warning documented in README) |
+| Dock | No icon (`LSUIElement = true`), menu bar resident | As specified |
+| Network | Zero communication. No Analytics / Telemetry / auto-update. Updates are manual via GitHub Releases | Privacy principle (§19) |
 
-## 5. 権限モデル（TCC） **[v1.1 新設]**
+## 5. Permission Model (TCC) **[v1.1 new]**
 
-Room が扱う領域と macOS の許可要件：
+The areas Room handles and macOS permission requirements:
 
-| 領域 | 権限 | Room の対応 |
+| Area | Permission | Room's handling |
 |------|------|------------|
-| RAM / SSD 統計、プロセス列挙（自ユーザー分） | 不要 | 常時利用 |
-| 他アプリの Quit / Force Quit（自ユーザー所有） | 不要（非 Sandbox） | 常時利用 |
-| `~/Library/Caches`, `~/Library/Logs`, `$TMPDIR`, `~/.npm` 等 | 不要 | 常時利用 |
-| `~/.Trash`（サイズ取得・削除） | **Full Disk Access 必須** | FDA 未付与時は Trash 行を「サイズ不明」とし、システム設定への誘導リンクを表示。付与時のみサイズ表示・削除可能 |
-| Safari のキャッシュ / データ | TCC 保護（FDA でも一部不可） | **スコープ外**（対象ブラウザは Chrome / Firefox 等の非 TCC 保護領域のみ） |
-| Desktop / Documents / Downloads | フォルダ単位の同意プロンプト | v0.1 ではスキャン対象にしない（Review カテゴリは v0.2） |
+| RAM / SSD stats, process enumeration (own user) | Not required | Always available |
+| Quit / Force Quit of other apps (owned by the current user) | Not required (non-Sandbox) | Always available |
+| `~/Library/Caches`, `~/Library/Logs`, `$TMPDIR`, `~/.npm`, etc. | Not required | Always available |
+| `~/.Trash` (size query & deletion) | **Full Disk Access required** | When FDA is not granted, the Trash row shows "size unknown" with a link to System Settings. Size display and deletion only when granted |
+| Safari cache / data | TCC-protected (partially inaccessible even with FDA) | **Out of scope** (target browsers are non-TCC-protected areas only, e.g., Chrome / Firefox) |
+| Desktop / Documents / Downloads | Per-folder consent prompt | Not scanned in v0.1 (Review category is v0.2) |
 
-原則: **Room は権限を先回りして要求しない**。FDA は Trash 機能を使おうとしたときにのみ案内する。
+Principle: **Room never asks for permissions preemptively**. FDA is only suggested when the user tries to use the Trash feature.
 
-## 6. 指標定義 **[v1.1 新設]**
+## 6. Metric Definitions **[v1.1 new]**
 
 ### 6.1 Memory
 
-| 指標 | 定義 |
+| Metric | Definition |
 |------|------|
-| RAM 総容量 | `ProcessInfo.processInfo.physicalMemory` |
-| RAM 使用量 (used) | `(max(internal − purgeable, 0) + wired + compressor) × pageSize`（`host_statistics64(HOST_VM_INFO64)`。Activity Monitor の "Memory Used" 準拠。クランプは App Memory = internal − purgeable の段階で行い、wired / compressor を失わせない） |
-| RAM 使用率 | `used / total` |
-| RAM 空き | `total - used` |
-| Memory Pressure | 初期値: sysctl `kern.memorystatus_vm_pressure_level`（1=Normal, 2=Warning, 4=Critical）。変化検知: `DispatchSource.makeMemoryPressureSource`（イベント駆動・ポーリング不要）。**取得失敗・未知値は Unavailable として Normal と区別する**（誤った "No action needed" を出さない） |
-| Swap | sysctl `vm.swapusage`（`xsw_usage.xsu_used`） |
-| 表示基数 | **1024 基数**（`ByteCountFormatter.CountStyle.memory`）。24 GB RAM が "24 GB" と表示されるため |
+| Total RAM | `ProcessInfo.processInfo.physicalMemory` |
+| RAM used | `(max(internal − purgeable, 0) + wired + compressor) × pageSize` (`host_statistics64(HOST_VM_INFO64)`, matching Activity Monitor's "Memory Used". Clamping happens at the App Memory = internal − purgeable step so wired / compressor are never lost) |
+| RAM usage | `used / total` |
+| RAM free | `total - used` |
+| Memory Pressure | Initial value: sysctl `kern.memorystatus_vm_pressure_level` (1=Normal, 2=Warning, 4=Critical). Change detection: `DispatchSource.makeMemoryPressureSource` (event-driven, no polling). **Failed or unknown reads are treated as Unavailable, distinct from Normal** (to avoid a false "No action needed") |
+| Swap | sysctl `vm.swapusage` (`xsw_usage.xsu_used`) |
+| Display base | **Base 1024** (`ByteCountFormatter.CountStyle.memory`) so 24 GB RAM displays as "24 GB" |
 
 ### 6.2 Storage
 
-| 指標 | 定義 |
+| Metric | Definition |
 |------|------|
-| 対象 | 起動ディスク（`/`）のみ。外付け・複数ボリュームは将来対応 |
-| 総容量 | `volumeTotalCapacityKey` |
-| 空き容量 | **`volumeAvailableCapacityForImportantUsageKey`**（APFS の purgeable を含む、Finder が使う値と同一。※Finder 側の表示はキャッシュにより一時的に数値がズレることがある） |
-| 使用量 | `total - free` |
-| 使用率 | `used / total` |
-| 表示基数 | **1000 基数**（`ByteCountFormatter.CountStyle.file`。Finder と一致） |
+| Target | Boot disk (`/`) only. External / multiple volumes: future support |
+| Total capacity | `volumeTotalCapacityKey` |
+| Free space | **`volumeAvailableCapacityForImportantUsageKey`** (includes APFS purgeable; the same value Finder uses. Note: Finder's display can temporarily diverge due to caching) |
+| Used | `total - free` |
+| Usage | `used / total` |
+| Display base | **Base 1000** (`ByteCountFormatter.CountStyle.file`, matching Finder) |
 
-### 6.3 プロセスの集計単位 **[v1.1 決定]**
+### 6.3 Process Aggregation Unit **[v1.1 decision]**
 
-- プロセスの実行パスに `.app` バンドルが含まれる場合、**同一バンドルのプロセス（Helper 含む）を 1 つのグループに集約**し、アプリ名で表示する（例: Chrome 本体 + 全 Helper = "Chrome 3.2 GB"）
-- バンドルに属さないプロセス（`node`, `docker` 等）は単体で表示する
-- RAM 使用量は `proc_pid_rusage` の `ri_phys_footprint`（Activity Monitor の "Memory" 列と同じ指標）のグループ合算値
-- 列挙対象は**現在のユーザーが所有するプロセスのみ**（他ユーザー・root プロセスの footprint は取得不可であり、Quit 対象にもならないため）
+- When a process's executable path contains an `.app` bundle, **aggregate all processes of the same bundle (including Helpers) into one group** and display by app name (e.g., Chrome main process + all Helpers = "Chrome 3.2 GB")
+- Processes not belonging to a bundle (`node`, `docker`, etc.) are shown individually
+- RAM usage is the group sum of `proc_pid_rusage`'s `ri_phys_footprint` (the same metric as Activity Monitor's "Memory" column)
+- Only **processes owned by the current user** are enumerated (other users' / root processes' footprints cannot be read, and they are not Quit targets either)
 
-## 7. UI 全体方針
+## 7. Overall UI Policy
 
-- ダッシュボード化しない / カードを並べない / 円グラフ・不要なチャートを使わない
-- 常時アニメーションなし / 色を多用しない / 深い階層を作らない（最大 2 階層）
-- 設定を増やしすぎない / 普段は存在感を出さない
-- UI 言語は**英語**（v0.1）。文字列一元管理レイヤは v0.1 では設けない（YAGNI。ローカライズ着手時に導入） **[v1.1 決定]**
-- **UI 意匠（アイコンセット・カラー・コンポーネント様式・数値フォーマットの見せ方）の正は `docs/design-system.md`** とする（ユーザー提供デザインシートを構造化、2026-08-20）。使用率バー・Pressure 状態色（Normal=青）等の常時カラーはこれに従い、v1.1 の「通常状態は無彩色」原則を改訂する **[v1.2 決定]**
+- No dashboards / no card layouts / no pie charts or unnecessary charts
+- No always-on animations / restrained use of color / no deep hierarchies (max 2 levels)
+- Don't over-add settings / stay unobtrusive in normal use
+- UI language is **English** (v0.1). No centralized string-management layer in v0.1 (YAGNI; introduce it when localization starts) **[v1.1 decision]**
+- **`docs/design-system.md` is authoritative for UI design (icon set, colors, component styles, number formatting)** (structured from the user-provided design sheet, 2026-08-20). Always-on colors such as usage bars and Pressure state colors (Normal=blue) follow it, revising v1.1's "achromatic in normal state" principle **[v1.2 decision]**
 
-## 8. Room アイコン
+## 8. Room Icon
 
-「面のない立体空間」— 斜め上から立方体内部を見た形で、底面・奥左・奥右の 3 面のみをワイヤーフレームで表現する。前面・上面は存在しない。
+"Frameless spatial volume" — a view into a cube from above at an angle, with only three faces rendered as wireframe: the bottom, the back-left, and the back-right. There is no front face and no top face.
 
-要件: ワイヤーフレーム / 面を塗らない / 単色 / 幾何学的 / ベクターベース / macOS Template Image 対応（Light / Dark 自動対応）/ 16–18px でも判別可能 / 線幅は細すぎない。
+Requirements: wireframe / faces unfilled / monochrome / geometric / vector-based / macOS Template Image support (auto Light / Dark) / recognizable at 16–18px / line weight not too thin.
 
-**[v1.1 決定]** Memory / Storage アイコンは v0.1 では SF Symbols（`memorychip` / `internaldrive`）を使用。Room アイコンのみ独自制作。
+**[v1.1 decision]** Memory / Storage icons use SF Symbols (`memorychip` / `internaldrive`) in v0.1. Only the Room icon is custom-made.
 
-## 9. メニューバー表示
+## 9. Menu Bar Display
 
-デフォルト:
+Default:
 
 ```text
 [Memory Icon]72 [Storage Icon]68
 ```
 
-Room アイコンはメニューバーに常時表示しない（v0.1 実機フィードバック）。**[v1.2 修正]**
+The Room icon is not always shown in the menu bar (v0.1 on-device feedback). **[v1.2 revision]**
 
-- `RAM` `SSD` `%` `・` 等のテキストは表示しない。アイコン + 数値のみ
-- 表示順は Memory → Storage 固定
-- **[v1.1 決定]** 数値は等幅数字（monospaced digits）で描画し、更新時の幅の揺れを防ぐ
-- **[v1.1 決定]** Show Memory / Show Storage が両方 OFF の場合は Room アイコンのみ表示する
+- No text such as `RAM`, `SSD`, `%`, or `・` is shown — icon + number only
+- Display order is fixed as Memory → Storage
+- **[v1.1 decision]** Numbers are rendered in monospaced digits to prevent width jitter on updates
+- **[v1.1 decision]** When both Show Memory and Show Storage are OFF, only the Room icon is shown
 
-### 表示モード（Settings で切替、メニューバーへ即時反映）
+### Display Modes (toggled in Settings, reflected in the menu bar immediately)
 
-| モード | 表示例 | 内容 |
+| Mode | Example | Content |
 |--------|--------|------|
-| Percentage（デフォルト） | `◇ ▦72 ▱68` | 使用率 |
-| Free | `◇ ▦5.6G ▱171G` | 空き容量 |
-| Used | `◇ ▦18.4G ▱341G` | 使用容量 |
+| Percentage (default) | `▦72 ▱68` | Usage |
+| Free | `▦5.6G ▱171G` | Free space |
+| Used | `▦18.4G ▱341G` | Used |
 
-容量の短縮表記: 100G 未満は小数 1 桁・`.0` は省略（`5.6G` `18.4G` `24G`）、100G 以上は整数（`171G` `341G`）＋単位 1 文字。v1.0 §8 の表示例（`▦18.4G ▱341G`）に準拠。**[v1.1 決定]**
+Compact notation: below 100G, one decimal place, `.0` omitted (`5.6G`, `18.4G`, `24G`); 100G and above, integer (`171G`, `341G`) plus one-letter unit. Follows the v1.0 §8 example (`▦18.4G ▱341G`). **[v1.1 decision]**
 
-## 10. メイン Popover
+## 10. Main Popover
 
-Room アイコンのクリックで表示。幅 280–320px、高さ可変、最大 2 階層。
+Shown by clicking the Room icon. Width 280–320px, variable height, max 2 levels of hierarchy.
 
 ```text
 ╭──────────────────────────────╮
@@ -200,38 +200,40 @@ Room アイコンのクリックで表示。幅 280–320px、高さ可変、最
 ╰──────────────────────────────╯
 ```
 
-- セクション見出し（Memory / Storage / Top Processes）はアイコン付き・**Title Case・太字なし・本文サイズ**（文字とアイコンは同サイズ）とする（v0.1 実機フィードバック反映） **[v1.2 修正]**
-- Popover ヘッダーの Room アイコンとサービス名 "Room" はひと回り大きく表示する **[v1.2 修正]**
-- Make Room / Processes は Popover 内でのプッシュ遷移（1 階層）
-- Settings は独立ウィンドウ（macOS 標準）
-- Top Processes は RAM 使用量上位 3 グループ。表示はアプリ / プロセス名 + RAM 使用量のみ（CPU 等は出さない）
+*Historical v1.0 mock — see the [v1.2] bullets below and docs/design-system.md for the current layout.*
+
+- Section headings (Memory / Storage / Top Processes) carry icons, **Title Case, not bold, body size** (text and icon the same size) (reflecting v0.1 on-device feedback) **[v1.2 revision]**
+- The Room icon and the service name "Room" in the popover header are shown slightly larger **[v1.2 revision]**
+- Make Room / Processes are push navigations within the popover (1 level)
+- Settings is a separate window (macOS standard)
+- Top Processes is the top 3 groups by RAM usage. Only the app / process name + RAM usage is shown (no CPU, etc.)
 
 ## 11. Memory Monitor
 
-表示項目: RAM 使用率 / 使用量 / 総容量 / 空き容量 / Memory Pressure / Swap 使用量。
+Displayed items: RAM usage / used / total / free / Memory Pressure / swap used.
 
-Room は **RAM 使用率だけで異常判定しない**。Memory Pressure（Normal / Warning / Critical）を主要指標とし、`RAM 90% / Pressure Normal` なら警告しない。
+Room does **not judge abnormality by RAM usage alone**. Memory Pressure (Normal / Warning / Critical) is the primary metric; `RAM 90% / Pressure Normal` produces no warning.
 
 ## 12. Storage Monitor
 
-表示項目: SSD 使用率 / 使用容量 / 総容量 / 空き容量。算出は §6.2 に従い、ユーザーが実際に利用可能な容量（Finder 一致）を表示する。
+Displayed items: SSD usage / used / total / free. Computed per §6.2, showing the capacity actually available to the user (matching Finder).
 
-## 13. Processes 画面
+## 13. Processes Screen
 
-Popover の `Processes ›` から、RAM 使用量降順の一覧（§6.3 の集約単位）を表示。各行に Quit / Force Quit を提供する。
+Reached via `Processes ›` in the popover, it shows a list in descending order of RAM usage (aggregated per §6.3). Each row offers Quit / Force Quit.
 
-## 14. Quit / Force Quit **[v1.1 具体化]**
+## 14. Quit / Force Quit **[v1.1 elaborated]**
 
-### 14.1 Quit（通常終了）
+### 14.1 Quit (Normal Termination)
 
-- .app グループ → `NSRunningApplication.terminate()`（macOS 標準の正常終了フロー。アプリ側の未保存確認ダイアログを尊重する）
-- 非 GUI プロセス → `SIGTERM`
-- 保存されていないユーザーデータを失わせる処理を優先しない
+- .app group → `NSRunningApplication.terminate()` (macOS standard graceful termination flow; respects the app's unsaved-changes dialog)
+- Non-GUI processes → `SIGTERM`
+- Never prioritize operations that would lose unsaved user data
 
-### 14.2 Force Quit（強制終了）
+### 14.2 Force Quit (Forced Termination)
 
-- .app グループ → `forceTerminate()`、非 GUI → `SIGKILL`
-- 実行前に必ず確認ダイアログを挟む:
+- .app group → `forceTerminate()`, non-GUI → `SIGKILL`
+- A confirmation dialog always precedes execution:
 
 ```text
 Force Quit Chrome?
@@ -239,29 +241,29 @@ Unsaved changes may be lost.
 [Cancel] [Force Quit]
 ```
 
-### 14.3 Quit がブロックされた場合 **[v1.1 新設]**
+### 14.3 When Quit Is Blocked **[v1.1 new]**
 
-`terminate()` は「終了要求」であり、アプリが未保存確認ダイアログ等で応答しない場合は終了しない。Quit 要求から約 5 秒後も生存している場合、該当行に `Still running` と `Force Quit` の選択肢を表示する。自動では Force Quit しない。
+`terminate()` is a "termination request"; the app will not quit if it doesn't respond (e.g., showing an unsaved-changes dialog). If the process is still alive about 5 seconds after the Quit request, the row shows `Still running` and a `Force Quit` option. Room never Force Quits automatically.
 
-### 14.4 実行の安全確認 **[v1.1 新設]**
+### 14.4 Execution Safety Checks **[v1.1 new]**
 
-- QuitService はサービス層でも保護ポリシー（§15）を再判定する（UI の無効化だけに依存しない多層防御）
-- PID 再利用対策として、操作直前に対象 PID の実行パス（.app グループは bundle パス）が記録時と一致することを確認する。一致しない・検証できない場合は何もしない
-- 生存確認（Still running 判定）も同一性確認を通した上で行う
+- QuitService re-evaluates the protection policy (§15) at the service layer too (defense in depth, not relying only on UI disabling)
+- To guard against PID reuse, right before the operation confirm the target PID's executable path (.app group: bundle path) still matches what was recorded. If it doesn't match or can't be verified, do nothing
+- The liveness check (Still running determination) also goes through the identity check first
 
-## 15. プロセス保護ルール **[v1.1 具体化]**
+## 15. Process Protection Rules **[v1.1 elaborated]**
 
-以下のいずれかに該当するグループは Quit / Force Quit 不可（UI 上も操作を無効化）:
+Groups matching any of the following cannot be Quit / Force Quit (operations are disabled in the UI too):
 
-1. Room 自身
-2. PID 0 / 1（kernel_task / launchd）
-3. 現在のユーザー以外が所有するプロセスを含むグループ
-4. 拒否リスト該当: `WindowServer`, `loginwindow`, `Dock`, `SystemUIServer`, `ControlCenter`, `NotificationCenter`, `Spotlight`, `coreaudiod`, `mds`, `mds_stores`, `logd`, `launchservicesd`, `distnoted`, `cfprefsd`
-5. 実行パスが `/System/Library/CoreServices` 配下（例外: Finder は Quit 可。終了しても macOS が自動再起動するため無害）
+1. Room itself
+2. PID 0 / 1 (kernel_task / launchd)
+3. Groups containing processes owned by anyone other than the current user
+4. On the denylist: `WindowServer`, `loginwindow`, `Dock`, `SystemUIServer`, `ControlCenter`, `NotificationCenter`, `Spotlight`, `coreaudiod`, `mds`, `mds_stores`, `logd`, `launchservicesd`, `distnoted`, `cfprefsd`
+5. Executable path under `/System/Library/CoreServices` (exception: Finder may be Quit; harmless because macOS auto-relaunches it)
 
-保護判定は純粋関数として実装し、ユニットテストで担保する。
+Protection judgment is implemented as pure functions and guaranteed by unit tests.
 
-## 16. Make Room（ハブ）
+## 16. Make Room (Hub)
 
 ```text
 MAKE ROOM
@@ -274,26 +276,26 @@ Storage
 15.1 GB cleanable         ›
 ```
 
-Memory と Storage は別ロジック。
+Memory and Storage use separate logic.
 
 ## 17. Make Room — Memory
 
-### 17.1 思想
+### 17.1 Philosophy
 
-RAM クリーナーにしない。以下を**目的としない**: 使用率の強制低下 / inactive cache の無条件 purge / free RAM の数値を増やすだけの処理 / 実態のない「解放しました」表示。
+Don't make it a RAM cleaner. The following are **not goals**: forcibly lowering usage / unconditionally purging inactive cache / processes that only inflate the free RAM figure / a "Freed" message with no substance.
 
-Room は **Memory Pressure Manager** として動作する:
+Room operates as a **Memory Pressure Manager**:
 
-1. Memory Pressure を診断
-2. Swap 量を確認
-3. 高メモリプロセスを表示
-4. ユーザーが対象を選択
-5. 通常 Quit を実行
-6. 必要な場合のみ Force Quit
+1. Diagnose Memory Pressure
+2. Check swap usage
+3. Show high-memory processes
+4. User selects the targets
+5. Execute a normal Quit
+6. Force Quit only when necessary
 
-**Room が勝手にアプリを終了することはない。**
+**Room never terminates apps on its own.**
 
-### 17.2 Pressure Normal 時
+### 17.2 When Pressure Is Normal
 
 ```text
 MEMORY          72%
@@ -301,13 +303,13 @@ Pressure        Normal
 No action needed
 ```
 
-高使用率でも Pressure が Normal なら `No action needed` を表示し、選択リストは出さない（手動の Quit は Processes 画面から常時可能）。
+Even at high usage, if Pressure is Normal, show `No action needed` and no selection list (manual Quit is always available from the Processes screen).
 
-Pressure が取得できない場合（Unavailable）は `No action needed` を**表示しない**。`Pressure unavailable` と表示し、判断を保留する。**[v1.1 追加決定]**
+When Pressure cannot be read (Unavailable), do **not** show `No action needed`. Show `Pressure unavailable` and hold the judgment. **[v1.1 additional decision]**
 
-### 17.3 Pressure Warning / Critical 時
+### 17.3 When Pressure Is Warning / Critical
 
-高メモリプロセス上位を表示し、チェックボックスで選択 → `Quit Selected` で通常 Quit を実行する。
+Show the top high-memory processes; select with checkboxes → `Quit Selected` performs a normal Quit.
 
 ```text
 Select apps to quit
@@ -321,57 +323,57 @@ Potential recovery   14.1 GB
 
 ### 17.4 Potential Recovery
 
-選択プロセスの現在の footprint 合算値を目安として表示する。**その容量が完全に free になることを保証する表示にはしない**（文言は "Potential recovery"）。
+Show the sum of the selected processes' current footprints as an estimate. **Do not present it as a guarantee that this capacity will become fully free** (the wording is "Potential recovery").
 
-## 18. Make Room — Storage（Cleanup）
+## 18. Make Room — Storage (Cleanup)
 
-### 18.1 原則
+### 18.1 Principles
 
-**重要なデータを確認なしに削除しない。** 削除前に必ず Review を挟み、項目ごとに ON/OFF できる。
+**Never delete important data without confirmation.** A Review always comes before deletion, with per-item ON/OFF.
 
-### 18.2 カテゴリと対象（v0.1） **[v1.1 具体化]**
+### 18.2 Categories and Targets (v0.1) **[v1.1 elaborated]**
 
-| レベル | 項目 | パス | 条件 |
+| Level | Item | Path | Conditions |
 |--------|------|------|------|
-| Safe | Application Cache | `~/Library/Caches/*` | `com.apple.*` を除外。実行中アプリのキャッシュを除外。Developer / Browser カテゴリが claim したパスを除外 |
-| Safe | Browser Cache | Chrome: `~/Library/Caches/Google/Chrome`、Firefox: `~/Library/Caches/Firefox`（実体は `Profiles/<profile>/cache2` 配下） | 対象ブラウザ実行中はスキップ（§18.4）。Safari はスコープ外（TCC） |
-| Safe | Temporary Files | `$TMPDIR`（自ユーザー） | 最終更新 3 日超のみ |
-| Safe | Logs | `~/Library/Logs` | 最終更新 **7 日超**のみ |
-| Safe | Trash | `~/.Trash` | **FDA 付与時のみ**（§5）。未付与時は行を「Grant Full Disk Access to include Trash」と表示 |
+| Safe | Application Cache | `~/Library/Caches/*` | Exclude `com.apple.*`. Exclude caches of running apps. Exclude paths claimed by the Developer / Browser categories |
+| Safe | Browser Cache | Chrome: `~/Library/Caches/Google/Chrome`, Firefox: `~/Library/Caches/Firefox` (actually under `Profiles/<profile>/cache2`) | Skipped while the target browser is running (§18.4). Safari is out of scope (TCC) |
+| Safe | Temporary Files | `$TMPDIR` (current user) | Last modified more than 3 days ago |
+| Safe | Logs | `~/Library/Logs` | Last modified more than **7 days** ago |
+| Safe | Trash | `~/.Trash` | **Only when FDA granted** (§5). Otherwise the row shows "Grant Full Disk Access to include Trash" |
 | Developer | Xcode DerivedData | `~/Library/Developer/Xcode/DerivedData` | |
 | Developer | Simulator Cache | `~/Library/Developer/CoreSimulator/Caches` | |
-| Developer | npm / pnpm / yarn Cache | `~/.npm/_cacache` / pnpm store（環境依存: `~/Library/pnpm/store`・`~/.local/share/pnpm/store`・`~/.pnpm-store` のうち存在するもの）/ `~/Library/Caches/Yarn` | 存在するもののみ表示 |
+| Developer | npm / pnpm / yarn Cache | `~/.npm/_cacache` / pnpm store (environment-dependent: whichever of `~/Library/pnpm/store`, `~/.local/share/pnpm/store`, `~/.pnpm-store` exist) / `~/Library/Caches/Yarn` | Only show those that exist |
 | Developer | Homebrew Cache | `~/Library/Caches/Homebrew` | |
 | Developer | CocoaPods Cache | `~/Library/Caches/CocoaPods` | |
 | Developer | Gradle Cache | `~/.gradle/caches` | |
 
-### 18.3 カテゴリ排他ルール **[v1.1 新設]**
+### 18.3 Category Exclusion Rules **[v1.1 new]**
 
-Yarn / Homebrew / CocoaPods 等のキャッシュは `~/Library/Caches` 配下にある。**個別ルールが claim したパスは Application Cache（汎用スキャン）から除外**し、二重計上・二重削除を防ぐ。この排他はユニットテストで担保する。
+Yarn / Homebrew / CocoaPods caches live under `~/Library/Caches`. **Paths claimed by specific rules are excluded from Application Cache (the generic scan)** to prevent double-counting and double-deletion. This exclusion is guaranteed by unit tests.
 
-また、汎用スキャンの対象は **reverse-DNS 形式（ドットを 2 つ以上含む名前）のディレクトリのみ**とする。`Google` `JetBrains` のようなベンダー名ディレクトリは実行中アプリ（bundle ID）との突き合わせができず §18.4 の保護を適用できないため、明示ルールがあるもの以外は対象外とする。**[v1.1 追加決定]**
+In addition, the generic scan only targets **directories in reverse-DNS format (names containing two or more dots)**. Vendor-name directories like `Google` or `JetBrains` cannot be matched against running apps (bundle IDs), so the §18.4 protection cannot be applied; anything without an explicit rule is excluded. **[v1.1 additional decision]**
 
-### 18.4 実行中アプリの保護 **[v1.1 新設]**
+### 18.4 Protection of Running Apps **[v1.1 new]**
 
-対象アプリ（ブラウザ・Xcode 等）が実行中の場合、そのキャッシュ項目は選択不可とし `Quit Chrome to clean` のように理由を表示する。実行中アプリのキャッシュ削除はデータ破損の原因になるため。
+When a target app (browser, Xcode, etc.) is running, its cache items are non-selectable, with a reason shown such as `Quit Chrome to clean` — deleting a running app's cache can cause data corruption.
 
-なお、この「ブロック表示」は明示ルール（Chrome / Firefox / Xcode 等）にのみ適用する。**汎用 Application Cache スキャン内の実行中アプリ分は、行として表示せずスキャン対象から除外する**（安全側。アプリ終了後の次回スキャンで対象になる）。per-app の行表示は v0.2 で検討。**[v1.1 追加決定]**
+This "blocked display" applies only to explicit rules (Chrome / Firefox / Xcode, etc.). **Running apps' entries inside the generic Application Cache scan are excluded from scanning rather than shown as rows** (the safe side; they become eligible on the next scan after the app quits). Per-app row display is considered for v0.2. **[v1.1 additional decision]**
 
-### 18.5 削除方式 **[v1.1 決定]**
+### 18.5 Deletion Method **[v1.1 decision]**
 
-Review で確認済みの項目は**完全削除**（`FileManager.removeItem`）。ゴミ箱への移動では SSD の実空き容量が増えず、Make Room の目的を果たさないため。対象はすべて再生成可能データに限定されており、Review 必須がセーフティネットとなる。ディレクトリ自体は残し、内容物のみ削除する。
+Items confirmed in Review are **permanently deleted** (`FileManager.removeItem`). Moving to the Trash would not increase the SSD's actual free space and would not serve Make Room's purpose. All targets are limited to regenerable data, and the mandatory Review is the safety net. The directory itself is kept; only its contents are deleted.
 
-**削除時の再検証（TOCTOU 対策）[v1.1 追加決定]**:
+**Re-verification at deletion time (TOCTOU countermeasure) [v1.1 additional decision]**:
 
-1. スキャン時に各対象の inode / device 番号を記録し、**削除直前に一致を再検証**する。不一致（差し替え・削除済み）はスキップする
-2. シンボリックリンクは対象にしない（スキャン時に除外し、削除時にも再確認する）
-3. 削除対象は必ず許可ルート（ルールの roots）配下であることを削除直前に再検証する
-4. §18.4 の実行中アプリ判定は**削除直前にも再実行**する（スキャン後に対象アプリが起動された場合に備える）
-5. 削除対象は symlink 解決後の実体パスでも許可ルート配下であることを検証する（中間 symlink による領域外脱出の防止） **[v1.1 追加決定]**
+1. Record each target's inode / device number at scan time and **re-verify the match immediately before deletion**. Skip on mismatch (replaced or already deleted)
+2. Symbolic links are never targets (excluded at scan time and re-checked at deletion time)
+3. Re-verify immediately before deletion that the target is under an allowed root (the rule's roots)
+4. The §18.4 running-app check is **re-run immediately before deletion** (in case the target app launched after scanning)
+5. Verify that the target's symlink-resolved real path is also under an allowed root (to prevent escaping the area via intermediate symlinks) **[v1.1 additional decision]**
 
-**既知の制約（v0.1）**: inode 再検証と実削除はパスベース操作であり、完全な原子性（fd ベースの `openat`/`unlinkat` 削除）は持たない。検証から削除までのミリ秒級の窓で同一ユーザーの悪意プロセスが差し替えを行うケースは防げないが、同一ユーザーの悪意コードは Room を介さず直接ファイルを削除できるため v0.1 の脅威モデル外とする（偶発的な変更・差し替えは inode 検証と実体パス検証でカバー）。fd ベース化は将来課題としてバックログに記録。
+**Known limitation (v0.1)**: inode re-verification and the actual deletion are path-based operations, so there is no full atomicity (fd-based `openat`/`unlinkat` deletion). A same-user malicious process swapping a target within the millisecond-scale window between verification and deletion cannot be prevented, but same-user malicious code could delete files directly without Room, so this is outside v0.1's threat model (accidental modifications or swaps are covered by inode verification and real-path verification). fd-based deletion is recorded in the backlog as a future item.
 
-### 18.6 スキャンと UI
+### 18.6 Scan and UI
 
 ```text
 STORAGE
@@ -388,9 +390,9 @@ Total           15.1 GB
 [Review]
 ```
 
-※ v1.0 の `[Review] [Make Room]` 2 ボタンは両方 Review 画面へ遷移する重複だったため、**ブルーの `Review` 単一ボタン**に統合（design-system §8）。**[v1.2 修正]**
+Note: v1.0's two buttons `[Review] [Make Room]` were redundant (both navigated to the Review screen), so they are consolidated into a single **blue `Review` button** (design-system §8). **[v1.2 revision]**
 
-Review 画面（各項目 ON/OFF 可能）:
+Review screen (each item can be toggled ON/OFF):
 
 ```text
 ✓ Application Cache   2.8 GB
@@ -402,111 +404,111 @@ Total                15.1 GB
 [Cancel]  [Clean]
 ```
 
-- スキャンは Make Room（Storage）を開いたときにのみ実行（バックグラウンド・キャンセル可能）
-- CLEANABLE の Total には**今すぐ削除可能（ready）な項目のみ**を合算する。実行中アプリでブロック中の項目は「+X GB after quitting apps」、FDA 未付与の Trash は案内行として分離表示する（見かけの Total と実際に消せる量を一致させる） **[v1.1 追加決定]**
-- 削除完了後は**実際に削除したファイルサイズ合計**を表示する（事実ベース。APFS の空き容量反映は遅延することがあるため、空き容量差分を成果として表示しない） **[v1.1 修正]**
-- 削除エラー（使用中ファイル等）は項目単位でスキップし、結果に `Skipped (in use)` として表示する **[v1.1 新設]**
+- Scanning runs only when Make Room (Storage) is opened (in the background, cancellable)
+- The CLEANABLE Total sums **only items that are ready to delete now**. Items blocked by running apps are shown as "+X GB after quitting apps"; Trash without FDA is shown separately as a hint row (so the apparent Total matches what can actually be cleaned) **[v1.1 additional decision]**
+- After deletion completes, show the **total size of the files actually deleted** (fact-based; because APFS free-space updates can lag, the free-space delta is not shown as the result) **[v1.1 revision]**
+- Deletion errors (files in use, etc.) are skipped per item and shown in the results as `Skipped (in use)` **[v1.1 new]**
 
 ## 19. Settings
 
 ```text
 GENERAL
-  Launch at Login        ON        ← SMAppService.mainApp（macOS 13+ 標準 API）
+  Launch at Login        ON        ← SMAppService.mainApp (macOS 13+ standard API)
 MENU BAR
   Show Memory            ON
   Show Storage           ON
-  Display                ● Percentage ○ Free ○ Used   ← 選択モードのプレビュー 1 行付き（実アイコン + 固定サンプル値。実測値は使わない） **[v1.1 修正]**
+  Display                ● Percentage ○ Free ○ Used   ← One-line preview of the selected mode (real icons + fixed sample values; no measured values) **[v1.1 revision]**
   Refresh Interval       ● 5 sec ○ 10 sec ○ 30 sec
 ```
 
-- Display / Show 設定はメニューバーへ即時反映
-- 設定は `UserDefaults`（`@AppStorage`）に保存
+- Display / Show settings are reflected in the menu bar immediately
+- Settings are stored in `UserDefaults` (`@AppStorage`)
 
 ### Refresh Policy
 
-- **軽量取得**（RAM 統計・SSD 容量）: Refresh Interval に従い定期更新
-- **Memory Pressure**: イベント駆動（DispatchSource）でポーリングなし
-- **プロセス一覧**: Popover を**開いたとき**と **Quit 操作後**に更新する。表示中の定期再更新は行わない（行の再構築が進行中のクリック操作を奪うため。v0.1 実機フィードバックによる UX 修正） **[v1.1 修正]**
-- **Storage Cleanup Scan**: Make Room（Storage)を開いたときのみ
-- Popover が閉じている間の処理はメニューバー表示に必要な軽量取得のみとする
+- **Lightweight reads** (RAM stats, SSD capacity): refreshed periodically per Refresh Interval
+- **Memory Pressure**: event-driven (DispatchSource), no polling
+- **Process list**: updated when the popover **opens** and **after a Quit operation**. No periodic re-refresh while displayed (rebuilding rows would interfere with in-progress clicks; UX fix from v0.1 on-device feedback) **[v1.1 revision]**
+- **Storage Cleanup Scan**: only when Make Room (Storage) is opened
+- While the popover is closed, only the lightweight reads needed for the menu bar display run
 
-## 20. スコープ外（v0.1） **[v1.1 明確化]**
+## 20. Out of Scope (v0.1) **[v1.1 clarified]**
 
-| 項目 | 理由 | 予定 |
+| Item | Reason | Plan |
 |------|------|------|
-| Docker cache 削除 | docker CLI 外部依存・デーモン状態依存 | v0.2 |
-| Review カテゴリ（Downloads 巨大ファイル / DMG / ZIP / 古いインストーラー / 重複検出） | v1.0 §35 MVP リスト外。重複検出は高コスト。Downloads は TCC 同意が必要 | v0.2（発見・提示のみの原則は維持） |
-| Safari キャッシュ | TCC 保護によりアクセス不可 | 対応予定なし |
-| 外付け SSD・複数ボリューム | 仕様通り将来対応 | v0.x |
-| CPU / GPU / Battery / Network / Temperature | Extensions | 将来 |
-| Plugin Runtime | 仕様通り不要 | 将来 |
-| 自動アップデート | ネットワーク通信ゼロ原則 | 検討外（Homebrew cask 等で代替） |
+| Docker cache deletion | Depends on the external docker CLI and daemon state | v0.2 |
+| Review category (large Downloads files / DMG / ZIP / old installers / duplicate detection) | Not in the v1.0 §35 MVP list. Duplicate detection is high-cost. Downloads requires TCC consent | v0.2 (the discover-and-present-only principle is kept) |
+| Safari cache | Inaccessible due to TCC protection | No plan to support |
+| External SSDs / multiple volumes | Future support as specified | v0.x |
+| CPU / GPU / Battery / Network / Temperature | Extensions | Future |
+| Plugin Runtime | Not needed as specified | Future |
+| Auto-update | Zero-network principle | Not considered (alternatives like Homebrew cask) |
 
-## 21. 決定事項一覧（PM 決定） **[v1.1]**
+## 21. Decision Log (PM decisions) **[v1.1]**
 
-| # | 決定 | 根拠 |
+| # | Decision | Basis |
 |---|------|------|
-| D1 | 最低 OS: macOS 14.0 | §4 |
-| D2 | 非 Sandbox / GitHub Releases 配布 | §4 |
-| D3 | RAM used = Activity Monitor 準拠式 | §6.1 |
-| D4 | SSD free = importantUsage キー（Finder 一致） | §6.2 |
-| D5 | プロセスは .app バンドル単位で集約 | §6.3 |
-| D6 | RAM 表示 1024 基数 / SSD 表示 1000 基数 | §6.1, §6.2 |
-| D7 | Quit は 2 経路（NSRunningApplication / SIGTERM） | §14 |
-| D8 | Quit ブロック時は 5 秒後に Force Quit 提案 | §14.3 |
-| D9 | 保護ルール（denylist + 所有者 + /System/Library/CoreServices） | §15 |
-| D10 | Trash は FDA オプトイン | §5, §18.2 |
-| D11 | クリーンアップは完全削除（Review 必須） | §18.5 |
-| D12 | 実行中アプリのキャッシュはスキップ | §18.4 |
-| D13 | カテゴリ間パス排他 | §18.3 |
-| D14 | Logs 7 日超 / Temp 3 日超 | §18.2 |
-| D15 | Docker cache・Review カテゴリは v0.2 | §20 |
-| D16 | UI 英語、等幅数字、SF Symbols（Memory/Storage） | §7–9 |
-| D17 | ビルドは XcodeGen（`project.yml` を正、`.xcodeproj` は生成物） | 実装計画参照。diff レビュー可能性のため |
-| D18 | ライセンス: MIT を提案 | OSS 標準。**最終承認は人間** |
-| D19 | クリーンアップ削除直前の再検証（inode/device 一致・symlink 拒否・許可ルート配下・実行中アプリ再判定） | §18.5 |
-| D20 | 汎用 Caches スキャンは reverse-DNS 名のディレクトリのみ | §18.3 |
-| D21 | Memory Pressure 取得不可は Unavailable として Normal と区別 | §6.1, §17.2 |
-| D22 | Cleanable Total は ready 項目のみ合算・削除実績は削除サイズ合計を表示 | §18.6 |
-| D23 | Quit / Force Quit はサービス層でも保護判定＋プロセス同一性確認 | §14.4 |
+| D1 | Minimum OS: macOS 14.0 | §4 |
+| D2 | Non-Sandbox / GitHub Releases distribution | §4 |
+| D3 | RAM used = Activity Monitor-compliant formula | §6.1 |
+| D4 | SSD free = importantUsage key (matches Finder) | §6.2 |
+| D5 | Processes aggregated per .app bundle | §6.3 |
+| D6 | RAM in base 1024 / SSD in base 1000 | §6.1, §6.2 |
+| D7 | Quit via two paths (NSRunningApplication / SIGTERM) | §14 |
+| D8 | Offer Force Quit after 5 seconds when Quit is blocked | §14.3 |
+| D9 | Protection rules (denylist + ownership + /System/Library/CoreServices) | §15 |
+| D10 | Trash requires FDA opt-in | §5, §18.2 |
+| D11 | Cleanup uses permanent deletion (Review required) | §18.5 |
+| D12 | Skip caches of running apps | §18.4 |
+| D13 | Path exclusion between categories | §18.3 |
+| D14 | Logs older than 7 days / Temp older than 3 days | §18.2 |
+| D15 | Docker cache and Review category deferred to v0.2 | §20 |
+| D16 | English UI, monospaced digits, SF Symbols (Memory/Storage) | §7–9 |
+| D17 | Build via XcodeGen (`project.yml` authoritative; `.xcodeproj` is generated) | See implementation plan. For diff reviewability |
+| D18 | License: MIT proposed | OSS standard. **Final approval is a human decision** |
+| D19 | Re-verification immediately before cleanup deletion (inode/device match, symlink rejection, under allowed roots, running-app re-check) | §18.5 |
+| D20 | Generic Caches scan targets reverse-DNS name directories only | §18.3 |
+| D21 | Unreadable Memory Pressure is Unavailable, distinct from Normal | §6.1, §17.2 |
+| D22 | Cleanable Total sums only ready items; deletion results show total deleted size | §18.6 |
+| D23 | Quit / Force Quit also do protection checks + process identity verification at the service layer | §14.4 |
 
-### 人間（ユーザー）確認事項
+### Human (User) Confirmation Items
 
-| 項目 | 内容 |
+| Item | Details |
 |------|------|
-| H1 | Apple Developer Program / Developer ID 署名の有無・方針 |
-| H2 | Bundle ID の確定（仮: `dev.takeshita.Room`。`project.yml` で変更可能） |
-| H3 | ライセンス最終承認（MIT 提案） |
-| H4 | GitHub リポジトリ公開・初回 Release の実施判断 |
-| H5 | 開発環境の準備: **Xcode 16 以上のインストール**と `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` の実行（現環境は Command Line Tools のみで `xcodebuild` 不可 — 実装開始のブロッカー） |
+| H1 | Apple Developer Program / Developer ID signing presence and policy |
+| H2 | Bundle ID finalization (tentative: `dev.takeshita.Room`; changeable in `project.yml`) |
+| H3 | Final license approval (MIT proposed) |
+| H4 | Decision to make the GitHub repository public and perform the first Release |
+| H5 | Development environment setup: **install Xcode 16 or later** and run `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` (the current environment only has Command Line Tools and cannot run `xcodebuild` — a blocker for starting implementation) |
 
-## 22. 非機能要件
+## 22. Non-Functional Requirements
 
-### パフォーマンス
+### Performance
 
 ```text
-Idle CPU   ≈ 0%（Popover 非表示時はタイマー 1 本 + イベント駆動のみ）
-RAM        数十 MB 以内を目標
+Idle CPU   ≈ 0% (popover hidden: one timer + event-driven only)
+RAM        Target: within a few tens of MB
 Network    0
 ```
 
 ### Privacy
 
-Analytics / Telemetry / Usage Tracking / アカウント / 不要なネットワーク通信 / ユーザーデータ送信 — すべて禁止。完全ローカル動作。
+Analytics / Telemetry / Usage Tracking / accounts / unnecessary network communication / user-data transmission — all prohibited. Fully local operation.
 
 ### Accessibility
 
-- 全 UI 要素に VoiceOver ラベル
-- キーボードナビゲーション
-- Light / Dark Mode 対応
-- 十分なコントラスト
-- 色以外の状態表現（Pressure はテキスト "Normal/Warning/Critical" を必ず併記。状態色は Normal=青 / Warning=黄 / Critical=赤。使用率バー等の常時カラーは `design-system.md` §3 に従う） **[v1.2 修正]**
+- VoiceOver labels on all UI elements
+- Keyboard navigation
+- Light / Dark Mode support
+- Sufficient contrast
+- State expression beyond color (Pressure always pairs the text "Normal/Warning/Critical". State colors: Normal=blue / Warning=yellow / Critical=red. Always-on colors such as usage bars follow `design-system.md` §3) **[v1.2 revision]**
 
-### OSS 方針
+### OSS Policy
 
-小さなコードベース / 外部依存最小限（ランタイム依存ゼロ、開発ツールは XcodeGen のみ）/ Swift 標準 API 優先 / CONTRIBUTING.md / Extension 追加方法の文書化 / Telemetry なし。
+Small codebase / minimal external dependencies (zero runtime dependencies; XcodeGen is the only dev tool) / Swift standard APIs preferred / CONTRIBUTING.md / document how to add Extensions / no telemetry.
 
-README 冒頭:
+README opening:
 
 ```markdown
 # Room
@@ -516,60 +518,60 @@ README 冒頭:
 A tiny macOS menu bar app for memory and storage.
 ```
 
-## 23. MVP v0.1 受け入れ条件
+## 23. MVP v0.1 Acceptance Criteria
 
-### 機能チェックリスト（v1.0 §35 準拠 + v1.1 調整）
+### Feature Checklist (per v1.0 §35 + v1.1 adjustments)
 
-- [ ] メニューバー常駐・Dock アイコン非表示
-- [ ] Room アイコン（独自）/ Memory・Storage アイコン（SF Symbols)
-- [ ] `◇ ▦72 ▱68` 相当の表示（Percentage / Free / Used、即時切替）
-- [ ] RAM 使用率・使用量・空き・総容量・Memory Pressure・Swap
-- [ ] SSD 使用率・使用量・空き・総容量（Finder 一致）
-- [ ] Top Processes 3 件（アプリ単位集約）
-- [ ] Processes 一覧（RAM 降順）+ Quit / Force Quit + 保護ルール
-- [ ] Memory Make Room（Normal 時 `No action needed` / Warning・Critical 時 選択 Quit + Potential recovery）
-- [ ] Storage Make Room（スキャン → Cleanable 表示 → Review → 選択削除 → 実測結果表示）
-- [ ] Settings（Launch at Login / Show 切替 / Display モード + プレビュー / Refresh Interval）
-- [ ] Light / Dark Mode、VoiceOver ラベル、キーボード操作
+- [ ] Menu bar resident, no Dock icon
+- [ ] Room icon (custom) / Memory & Storage icons (SF Symbols)
+- [ ] `▦72 ▱68` equivalent display (Percentage / Free / Used, instant switching)
+- [ ] RAM usage, used, free, total, Memory Pressure, swap
+- [ ] SSD usage, used, free, total (matches Finder)
+- [ ] Top 3 processes (grouped per app)
+- [ ] Processes list (RAM descending) + Quit / Force Quit + protection rules
+- [ ] Memory Make Room (`No action needed` at Normal / selective Quit + Potential recovery at Warning / Critical)
+- [ ] Storage Make Room (scan → Cleanable display → Review → selective deletion → actual-result display)
+- [ ] Settings (Launch at Login / Show toggles / Display mode + preview / Refresh Interval)
+- [ ] Light / Dark Mode, VoiceOver labels, keyboard operation
 
-### Memory Make Room 完成条件（v1.0 §36）
+### Memory Make Room Completion Criteria (v1.0 §36)
 
-- Normal 時: `Pressure Normal` + `No action needed` を表示できる
-- Warning / Critical 時: 高メモリプロセスを特定表示し、選択 Quit できる。必要時のみ Force Quit 可能
+- At Normal: can display `Pressure Normal` + `No action needed`
+- At Warning / Critical: can identify high-memory processes, display them, and Quit them selectively. Force Quit possible only when needed
 
-### Storage Make Room 完成条件（v1.0 §37）
+### Storage Make Room Completion Criteria (v1.0 §37)
 
-- 安全に削除可能な候補をカテゴリ別サイズ付きで検出できる
-- 削除前に Review でき、選択した項目だけ削除できる
+- Can detect safely deletable candidates with per-category sizes
+- Can Review before deletion and delete only the selected items
 
-## 24. アーキテクチャ
+## 24. Architecture
 
 ```text
 Room/
-├── App/            RoomApp（MenuBarExtra）, AppState, RefreshScheduler
-├── Models/         MemorySnapshot, StorageSnapshot, ProcessGroup, CleanupItem, 各種 enum
+├── App/            RoomApp (MenuBarExtra), AppState, RefreshScheduler
+├── Models/         MemorySnapshot, StorageSnapshot, ProcessGroup, CleanupItem, various enums
 ├── Services/       MemoryService, StorageService, ProcessService, QuitService, CleanupService
-│                   （すべて protocol + 実装。システム API はここに隔離）
-├── Core/           純粋ロジック: 集約・保護ポリシー・クリーンアップルール・フォーマッタ
+│                   (all protocol + implementation; system APIs isolated here)
+├── Core/           Pure logic: aggregation, protection policy, cleanup rules, formatters
 ├── UI/
-│   ├── Components/ 再利用ビュー（SectionHeader, StatRow, …）
+│   ├── Components/ Reusable views (SectionHeader, StatRow, …)
 │   ├── Screens/    PopoverRoot, Processes, MakeRoom, Cleanup, Settings
-│   └── Icons/      RoomIcon（テンプレート画像）
-└── Support/        Bridging Header（libproc）, 定数
+│   └── Icons/      RoomIcon (template image)
+└── Support/        Bridging Header (libproc), constants
 ```
 
-- **View 内へ直接システム取得処理を書かない**（Services 経由のみ）
-- Core は Foundation のみに依存する純粋ロジックとし、ユニットテストの主対象とする
-- Extension 追加は「Service protocol + Screen」の追加で完結する構造を保つ
+- **Never write system acquisition code directly inside Views** (via Services only)
+- Core is pure logic depending only on Foundation and is the primary target of unit tests
+- Keep a structure where adding an Extension is just adding a "Service protocol + Screen"
 
 ---
 
-## 25. 最終定義
+## 25. Final Definition
 
-Room は RAM クリーナーではない。総合システムモニターでもない。
+Room is not a RAM cleaner. Nor is it a comprehensive system monitor.
 
-> **Mac にあとどれくらい Room があるかを一目で知り、本当に必要なときだけ、安全に Room を作るための小さな道具**である。
+> **A small tool to see at a glance how much Room is left on your Mac, and to safely make room only when you truly need it.**
 
 - Memory: **Diagnose pressure. Quit what you don't need.**
 - Storage: **Find what can safely go. Make room.**
-- プロダクト全体: **Room — See what's full. Make room.**
+- Product overall: **Room — See what's full. Make room.**

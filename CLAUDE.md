@@ -1,38 +1,28 @@
-# Room — Claude Code 向けガイド
+# Room — Guide for Claude Code
 
-共通ルールは @AGENTS.md を参照（必読）。ビルド・テスト・リポジトリ構成・コーディング規約・
-禁止事項・Git 規約・Definition of Done はすべて AGENTS.md に定義されている。ここでは
-Claude Code 特有の運用体制のみを記載する。
+Common rules are in @AGENTS.md (required reading). Build & test, repository structure, coding conventions, prohibitions, Git conventions, and Definition of Done are all defined in AGENTS.md. This file only covers the operating conventions specific to Claude Code.
 
-## エージェント運用体制（このリポジトリ固有）
+## Agent operating structure (specific to this repository)
 
-- メインセッション（親）は **PM 専任**。意思決定・タスク分解・ディスパッチ・成果物レビューのみを行い、
-  親自身は実装・検証・テスト実行を行わない。
-- 実装は Agent ツールで `model` を明示したサブエージェントに委譲する
-  （原則 `sonnet`。システム API が絡む難所は `opus`、ドキュメント類は `haiku`）。
-- 実装計画 `docs/superpowers/plans/2026-08-20-room-mvp.md` の各タスクには担当モデルが
-  明記されているので、それに従う。
+- The main session (parent) is **PM-only**. It only makes decisions, decomposes tasks, dispatches work, and reviews deliverables — it never implements, verifies, or runs tests itself.
+- Implementation is delegated via the Agent tool to subagents with an explicit `model` (default `sonnet`; `opus` for hard spots involving system APIs, `haiku` for documentation).
+- Each task in the implementation plan `docs/superpowers/plans/2026-08-20-room-mvp.md` specifies its assigned model; follow that.
 
-## エスカレーション
+## Escalation
 
-品質不足時は以下の順で対応する。
+When quality is insufficient, respond in the following order.
 
-1. まず原因診断を行う。仕様の曖昧さ・コンテキスト不足が原因であれば、同モデルのまま
-   ディスパッチプロンプトを改善して再実行する（こちらを優先）。
-2. モデルの能力不足と判断した場合のみ、1 段だけ上位モデルへ切り替えて再実行する
-   （`haiku` → `sonnet` → `opus` → `fork`）。
-3. エスカレーションは 1 タスクにつき 1 回まで。再実行時は失敗した diff・レビュー指摘・
-   未達基準を必ず添付する（白紙からの再実行は禁止）。
+1. First diagnose the cause. If ambiguous spec or insufficient context is the cause, keep the same model, improve the dispatch prompt, and retry (prefer this).
+2. Only when the model's capability is judged insufficient, switch one step up to a higher model and retry (`haiku` → `sonnet` → `opus` → `fork`).
+3. Escalation is limited to once per task. When re-running, always attach the failed diff, review comments, and unmet criteria (no re-runs from a blank slate).
 
-## 人間確認事項（PM が勝手に決めない）
+## Items requiring human confirmation (PM must not decide unilaterally)
 
-- Developer ID 署名の有無・方針
-- Bundle ID の確定
-- ライセンスの最終承認
-- GitHub 公開・Release の実施判断
+- Developer ID signing presence and policy
+- Bundle ID finalization
+- Final license approval
+- Decision to make the GitHub repository public / perform a Release
 
-## 動作確認の注意
+## Manual verification notes
 
-Room はメニューバー常駐アプリである。`xcodebuild` によるビルド・テストは自動化できるが、
-UI の実挙動確認（メニューバー表示・Popover の開閉・実際のファイル削除等）は人間の目視確認を
-依頼すること。実削除を伴う手動テストは、必ず捨てデータで行うよう案内する。
+Room is a menu bar resident app. Builds and tests via `xcodebuild` can be automated, but verifying actual UI behavior (menu bar display, Popover open/close, actual file deletion, etc.) should be delegated to human visual checks. Instruct that any manual tests involving real deletions must use throwaway data.

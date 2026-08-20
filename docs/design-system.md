@@ -1,113 +1,113 @@
 # Room Design System v1.0
 
-> 出典: ユーザー提供デザインシート（2026-08-20）。UI 意匠の**正**はこの文書とする。
-> 機能仕様の正は `requirements.md`（本文書は「どう見せるか」のみを定める）。
+> Source: user-provided design sheet (2026-08-20). This document is authoritative for UI design.
+> The functional spec's authority is `requirements.md` (this document only defines "how things look").
 
-## 1. ブランドアイコン（Room）
+## 1. Brand Icon (Room)
 
-- モチーフ: **面のない立体空間** — 底面 + 奥の左・右面の 3 面のみのワイヤーフレーム
-- 原則: 面は塗らない / 単色 / 幾何学的 / 小サイズ（16–18px）でも判別可能 / Light・Dark 対応（Template Image）
-- 意味: 空間・余白・空き・Room（アプリケーション識別）
-- 実装: `Room/UI/Icons/RoomIcon.swift`（NSBezierPath、isTemplate）
+- Motif: **frameless spatial volume** — wireframe of only three faces: the bottom + the back-left + the back-right
+- Principles: unfilled faces / monochrome / geometric / recognizable at small sizes (16–18px) / Light & Dark support (Template Image)
+- Meaning: space, whitespace, free space, Room (app identification)
+- Implementation: `Room/UI/Icons/RoomIcon.swift` (NSBezierPath, isTemplate)
 
-## 2. アイコンセット（統一デザイン言語）
+## 2. Icon Set (Unified Design Language)
 
-| アイコン | 意味 | v0.1 実装 | 将来 |
+| Icon | Meaning | v0.1 implementation | Future |
 |---|---|---|---|
-| Room（ワイヤーフレームの部屋） | アプリ識別 | RoomIcon | — |
-| Memory（縦長モジュール型グリフ） | RAM の状態 | SF Symbols `memorychip` | カスタムグリフ（線幅・角丸を Room アイコンと統一） |
-| Storage（ドライブ型グリフ） | SSD の状態 | SF Symbols `internaldrive` | 同上 |
+| Room (wireframe room) | App identification | RoomIcon | — |
+| Memory (vertical module glyph) | RAM status | SF Symbols `memorychip` | Custom glyph (line weight & corner radius unified with the Room icon) |
+| Storage (drive glyph) | SSD status | SF Symbols `internaldrive` | Same as above |
 
-方針: 線の太さ・角丸・抽象度をブランドアイコンと揃え、3 つで 1 つの言語に見えること。
+Policy: match line weight, corner radius, and abstraction to the brand icon so the three read as one language.
 
-## 3. カラー
+## 3. Color
 
-| 用途 | 色 |
+| Use | Color |
 |---|---|
-| アクセント / 主要アクション（Review ボタン、選択状態） | システムブルー（accentColor） |
-| Memory 使用率バー | ブルー |
-| Storage 使用率バー | グリーン |
-| Pressure: Normal | **ブルー**（ドット + テキスト） |
-| Pressure: Warning | イエロー |
-| Pressure: Critical | レッド |
-| 文字・背景 | システム標準（primary / secondary、Dark・Light 自動） |
+| Accent / primary action (Review button, selection state) | System blue (accentColor) |
+| Memory usage bar | Blue |
+| Storage usage bar | Green |
+| Pressure: Normal | **Blue** (dot + text) |
+| Pressure: Warning | Yellow |
+| Pressure: Critical | Red |
+| Text & background | System standard (primary / secondary, auto Dark / Light) |
 
-- 状態は**必ずテキスト併記**（色だけで伝えない — アクセシビリティ原則は維持）
-- **Pressure の表示は「色丸（●）+ 通常色テキスト」**とする。状態テキスト自体には着色しない（2026-08-20 フィードバック。シートの「Memory Pressure の状態表現」準拠）
-- ※ v1.1 要件の「通常状態は無彩色」原則は本デザイン決定で改訂（Normal ブルー・使用率バーの常時カラーを許容）
+- State is **always paired with text** (never communicate by color alone — accessibility principle preserved)
+- **Pressure is shown as a "colored dot (●) + normal-color text"**. The status text itself is not colored (2026-08-20 feedback; per the sheet's "Memory Pressure status expression")
+- Note: the v1.1 requirement's "achromatic in normal state" principle is revised by this design decision (allowing Normal blue and always-on usage-bar color)
 
-## 4. 数値フォーマット
+## 4. Number Format
 
-| 文脈 | 形式 | 例 |
+| Context | Format | Example |
 |---|---|---|
-| メニューバー（短縮） | 単位 1 文字・小数は 100 未満で 1 桁 | `824M` `3.2G` `171G` `1.2T` |
-| ポップオーバー（詳細） | 単位 + スペース | `824 MB` `3.2 GB` `171 GB` `1.2 TB` |
+| Menu bar (compact) | One-letter unit, one decimal below 100 | `824M` `3.2G` `171G` `1.2T` |
+| Popover (detailed) | Unit + space | `824 MB` `3.2 GB` `171 GB` `1.2 TB` |
 
-- **TB 帯対応を追加**（現行 ByteText は G 止まり）
-- 等幅数字（monospaced digits）必須
+- **Add TB-range support** (current ByteText stops at G)
+- Monospaced digits required
 
-## 5. メニューバー表示
+## 5. Menu Bar Display
 
 ```
 [Memory]72 [Storage]68
 ```
 
-- アイコン + 数値のみ。単位・%・ラベル文字は出さない
-- **Room アイコンはメニューバーに表示しない**（2026-08-20 実機フィードバック）。Show Memory / Show Storage が両方 OFF のときのみ、クリック可能性維持のため Room アイコン単体を表示する
-- 表示モード: Percentage（既定）→ `72 / 68`、Free → `5.6G / 171G`、Used → `18.4G / 341G`
-- **実装上の制約**: SwiftUI `MenuBarExtra` のラベルは複数の Image/Text を正しく描画しない（先頭の画像 + 1 テキストに縮退する）。そのためメニューバーラベルは**全要素を 1 枚のテンプレート NSImage に合成**して描画する（`MenuBarLabelRenderer`）。数値は monospaced digit フォントで描画し幅の揺れを防ぐ
+- Icon + number only. No unit, %, or label text
+- **The Room icon is not shown in the menu bar** (2026-08-20 on-device feedback). Only when both Show Memory and Show Storage are OFF is the Room icon shown alone, to keep the item clickable
+- Display modes: Percentage (default) → `72 / 68`, Free → `5.6G / 171G`, Used → `18.4G / 341G`
+- **Implementation constraint**: SwiftUI `MenuBarExtra` labels don't render multiple Image/Text correctly (they degenerate to the first image + one text). So the menu bar label is drawn by **compositing all elements into a single template NSImage** (`MenuBarLabelRenderer`). Numbers are drawn with a monospaced digit font to prevent width jitter
 
-## 6. メインポップオーバー
+## 6. Main Popover
 
-- **ヘッダー**: Room アイコン + `Room` + 右端に歯車（Settings ショートカット）
-- **Memory / Storage は縦積みの単一カラム**（2 カラムカードは 2026-08-20 フィードバックで廃止。ポップオーバー幅は 320px）:
-  - 見出しは **Title Case・太字なし・本文サイズ**（アイコンと文字を同サイズで並べる。2026-08-20 フィードバック）+ 右に `%`（**% も太字なし・本文サイズ**）
-  - ヘッダーの Room アイコン（22pt）+ "Room"（title3 semibold）はひと回り大きく
-  - **使用率プログレスバー**（Memory=ブルー / Storage=グリーン、細め・角丸）
+- **Header**: Room icon + `Room` + gear at the right edge (Settings shortcut)
+- **Memory / Storage are stacked in a single column** (the 2-column card was dropped per 2026-08-20 feedback; popover width is 320px):
+  - Heading is **Title Case, not bold, body size** (icon and text at the same size; 2026-08-20 feedback) + `%` on the right (**the % is also not bold, body size**)
+  - The header's Room icon (22pt) + "Room" (title3 semibold) are slightly larger
+  - **Usage progress bar** (Memory=blue / Storage=green, thin, rounded)
   - `used / total`
-  - Memory 側: `Pressure <状態>`（状態語は状態色）+ `Swap`
-  - Storage 側: `Free`
-- **Top Processes**: 名前 + 使用量のみ（上位 3 件。アプリアイコンは廃止 — 2026-08-20 フィードバックで簡素化）
-- **フッター行**: `Make Room`（Room アイコン）/ `Processes`（ゲージ型アイコン + chevron）/ `Settings`（歯車）
+  - Memory side: `Pressure <status>` (the status word in its state color) + `Swap`
+  - Storage side: `Free`
+- **Top Processes**: name + usage only (top 3. App icons dropped — simplified per 2026-08-20 feedback)
+- **Footer row**: `Make Room` (Room icon) / `Processes` (gauge icon + chevron) / `Settings` (gear)
 
-## 7. Processes 一覧
+## 7. Processes List
 
-- 行構成: 名前 + 使用量 + **インラインの `Quit` / `Force Quit` ボタン**（控えめな bordered スタイル。アプリアイコンは廃止 — 2026-08-20 フィードバック）
-- **Quit / Force Quit 実行中は、2 つのボタンを小型の円形スピナー（macOS 標準の点線ぐるぐる）に置き換える**。生存確認（約 5 秒）完了後、終了していれば行が消え、残っていれば "Still running" + ボタンに復帰
-- 保護対象は該当ボタンをグレー無効化（例: Finder は Force Quit 無効）
-- ellipsis メニュー方式は廃止（ワンクリックで操作可能に）
+- Row structure: name + usage + **inline `Quit` / `Force Quit` buttons** (subtle bordered style. App icons dropped — 2026-08-20 feedback)
+- **While Quit / Force Quit is running, the two buttons are replaced by a small circular spinner (the macOS standard dotted progress indicator)**. When the liveness check (~5 seconds) completes, the row disappears if the process quit, or returns to "Still running" + buttons if not
+- Protected targets have the relevant buttons grayed out (e.g., Finder's Force Quit disabled)
+- The ellipsis-menu approach is dropped (one-click operation)
 
 ## 8. Make Room > Storage
 
-- カテゴリ行: 名前 + サイズ + chevron
-- `Total` 行 + 右に**ブルーの `Review` ボタン**（primary action / borderedProminent）
+- Category rows: name + size + chevron
+- `Total` row + **blue `Review` button** on the right (primary action / borderedProminent)
 
 ## 9. Settings > Display
 
-- ラジオ各行の右に**プレビューチップ**（Memory・Storage アイコン + 固定サンプル値、角丸背景。Room アイコンは含めない — メニューバー実表示と一致させる）
-  - Percentage: `72 / 68`、Free: `5.6G / 171G`、Used: `18.4G / 341G`
-- Refresh Interval はポップアップメニュー（`5 sec`）
+- **Preview chip** to the right of each radio row (Memory & Storage icons + fixed sample values, rounded background. No Room icon — to match the actual menu bar display)
+  - Percentage: `72 / 68`, Free: `5.6G / 171G`, Used: `18.4G / 341G`
+- Refresh Interval is a pop-up menu (`5 sec`)
 
-## 10. スペーシングスケール（黄金比ベース）
+## 10. Spacing Scale (golden-ratio based)
 
-φ（≈1.618）連鎖のフィボナッチスケール **3 / 5 / 8 / 13 / 21**（隣接比 ≈ φ）を全画面で使う（2026-08-20 フィードバックで 4/6/10/16/26 から 1 段縮小。比率は不変）:
+Use the Fibonacci scale **3 / 5 / 8 / 13 / 21** derived from the φ (≈1.618) chain (adjacent ratios ≈ φ) across all screens (shrunk one step from 4/6/10/16/26 per 2026-08-20 feedback; ratios unchanged):
 
-| 値 | 用途 |
+| Value | Use |
 |---|---|
-| 3 | アイコンと文字のマイクロギャップ |
-| 5 | 統計行どうしの行間 |
-| 8 | フッター行間・チップ内周 |
-| 13 | 画面の外周パディング |
-| 21 | セクション間 |
+| 3 | Micro-gap between icon and text |
+| 5 | Line spacing between stat rows |
+| 8 | Footer row spacing, chip inner padding |
+| 13 | Screen outer padding |
+| 21 | Between sections |
 
-本文テキストは `.body`、キャプションは `.caption`（`.callout` は使わない — 視認性優先、2026-08-20 フィードバック）。
+Body text uses `.body`, captions use `.caption` (`.callout` is not used — readability first, 2026-08-20 feedback).
 
-## 11. 実装フェーズ（v0.1.x デザイン反映）
+## 11. Implementation Phases (v0.1.x design reflection)
 
-| フェーズ | 内容 |
+| Phase | Contents |
 |---|---|
-| D1 | 基盤: ByteText TB 対応 / Pressure カラー（Normal=ブルー）/ UsageBar コンポーネント / アプリアイコン取得ヘルパー |
-| D2 | ポップオーバー: 2 カラムカード + バー + ヘッダー歯車 + TOP PROCESSES アイコン + フッター行アイコン |
-| D3 | Processes: アイコン + インラインボタン行 |
-| D4 | Make Room Storage: カテゴリ行 + ブルー Review / Settings: プレビューチップ + ポップアップ |
-| D5（将来） | Memory / Storage カスタムグリフ化 |
+| D1 | Foundation: ByteText TB support / Pressure colors (Normal=blue) / UsageBar component / app-icon helper |
+| D2 | Popover: 2-column card + bars + header gear + TOP PROCESSES icons + footer-row icons (later revised by D10/D11: single column, icon-free rows) |
+| D3 | Processes: icon + inline button row |
+| D4 | Make Room Storage: category rows + blue Review / Settings: preview chips + pop-up |
+| D5 (future) | Custom Memory / Storage glyphs |
