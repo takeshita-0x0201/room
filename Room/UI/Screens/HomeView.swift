@@ -31,8 +31,7 @@ struct HomeView: View {
 
     @ViewBuilder private var memorySection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            SectionHeader(title: "MEMORY",
-                          trailing: state.memory.map { ByteText.percent($0.usedFraction) + "%" })
+            SectionHeader(title: "MEMORY", systemImage: "memorychip", trailing: state.memory.map { ByteText.percent($0.usedFraction) + "%" })
             if let m = state.memory {
                 Text(ByteText.pair(used: m.usedBytes, total: m.totalBytes, base: .memory1024))
                     .font(.callout).monospacedDigit()
@@ -46,8 +45,7 @@ struct HomeView: View {
 
     @ViewBuilder private var storageSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            SectionHeader(title: "STORAGE",
-                          trailing: state.storage.map { ByteText.percent($0.usedFraction) + "%" })
+            SectionHeader(title: "STORAGE", systemImage: "internaldrive", trailing: state.storage.map { ByteText.percent($0.usedFraction) + "%" })
             if let s = state.storage {
                 Text(ByteText.pair(used: s.usedBytes, total: s.totalBytes, base: .storage1000))
                     .font(.callout).monospacedDigit()
@@ -59,7 +57,7 @@ struct HomeView: View {
 
     @ViewBuilder private var topProcesses: some View {
         VStack(alignment: .leading, spacing: 4) {
-            SectionHeader(title: "TOP PROCESSES")
+            SectionHeader(title: "TOP PROCESSES", systemImage: "chart.bar")
             ForEach(state.processes.prefix(3)) { group in
                 StatRow(label: group.displayName,
                         value: ByteText.long(group.footprintBytes, base: .memory1024))

@@ -4,7 +4,8 @@ import Observation
 /// アプリ唯一の状態ハブ。更新ポリシー（要件 §19 Refresh Policy）:
 /// - RAM/SSD 統計: Refresh Interval のタイマーで定期更新（軽量）
 /// - Memory Pressure: DispatchSource イベント駆動（ポーリングなし）
-/// - プロセス一覧: Popover 表示中のみ更新（高コスト）
+/// - プロセス一覧: Popover を開いたときと Quit 操作後のみ更新
+///   （表示中の定期再構築は行の差し替えでクリック操作を奪うため行わない）
 @Observable
 @MainActor
 final class AppState {
@@ -44,12 +45,14 @@ final class AppState {
 
     func refreshNow() {
         refreshStats()
-        if isPopoverVisible { refreshProcesses() }
     }
 
     func refreshStats() {
-        memory = memoryService.snapshot()
-        storage = storageService.snapshot()
+        // 値が変わらない限り再代入しない — 無変化の再描画（クリックを奪う一因）を避ける
+        let newMemory = memoryService.snapshot()
+        if newMemory != memory { memory = newMemory }
+        let newStorage = storageService.snapshot()
+        if newStorage != storage { storage = newStorage }
     }
 
     func refreshProcesses() {

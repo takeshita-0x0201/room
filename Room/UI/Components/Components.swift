@@ -2,13 +2,18 @@ import SwiftUI
 
 struct SectionHeader: View {
     let title: String
+    var systemImage: String?
     var trailing: String?
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .firstTextBaseline, spacing: 5) {
+            if let systemImage {
+                Image(systemName: systemImage)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
             Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .font(.subheadline.weight(.bold))
             Spacer()
             if let trailing {
                 Text(trailing)

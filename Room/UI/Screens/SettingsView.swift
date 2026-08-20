@@ -2,7 +2,6 @@ import ServiceManagement
 import SwiftUI
 
 struct SettingsView: View {
-    @Environment(AppState.self) private var state
     @AppStorage(SettingsKey.displayMode) private var displayModeRaw = DisplayMode.percentage.rawValue
     @AppStorage(SettingsKey.showMemory) private var showMemory = true
     @AppStorage(SettingsKey.showStorage) private var showStorage = true
@@ -33,17 +32,23 @@ struct SettingsView: View {
 
                 Picker("Display", selection: $displayModeRaw) {
                     ForEach(DisplayMode.allCases, id: \.rawValue) { mode in
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(mode.title)
-                            Text(preview(for: mode))
-                                .font(.caption)
-                                .monospacedDigit()
-                                .foregroundStyle(.secondary)
-                        }
-                        .tag(mode.rawValue)
+                        Text(mode.title).tag(mode.rawValue)
                     }
                 }
                 .pickerStyle(.radioGroup)
+
+                LabeledContent("Preview") {
+                    HStack(spacing: 4) {
+                        Image(nsImage: RoomIcon.menuBarImage())
+                        Image(systemName: "memorychip")
+                        Text(sampleValues.memory)
+                        Image(systemName: "internaldrive")
+                        Text(sampleValues.storage)
+                    }
+                    .font(.callout)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                }
 
                 Picker("Refresh Interval", selection: $refreshInterval) {
                     Text("5 sec").tag(5)
@@ -58,8 +63,12 @@ struct SettingsView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    /// メニューバープレビュー（要件 §19: 各モードの見え方を表示）
-    private func preview(for mode: DisplayMode) -> String {
-        "◇  ▦\(MenuBarText.memoryValue(state.memory, mode: mode))  ▱\(MenuBarText.storageValue(state.storage, mode: mode))"
+    /// プレビューは固定サンプル値（要件 §19。実測値だと切替の意図が伝わりにくい）
+    private var sampleValues: (memory: String, storage: String) {
+        switch DisplayMode(rawValue: displayModeRaw) ?? .percentage {
+        case .percentage: ("72", "68")
+        case .free: ("5.6G", "171G")
+        case .used: ("18.4G", "341G")
+        }
     }
 }
