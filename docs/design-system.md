@@ -48,10 +48,11 @@
 ## 5. メニューバー表示
 
 ```
-[Room] [Memory]72 [Storage]68
+[Memory]72 [Storage]68
 ```
 
 - アイコン + 数値のみ。単位・%・ラベル文字は出さない
+- **Room アイコンはメニューバーに表示しない**（2026-08-20 実機フィードバック）。Show Memory / Show Storage が両方 OFF のときのみ、クリック可能性維持のため Room アイコン単体を表示する
 - 表示モード: Percentage（既定）→ `72 / 68`、Free → `5.6G / 171G`、Used → `18.4G / 341G`
 - **実装上の制約**: SwiftUI `MenuBarExtra` のラベルは複数の Image/Text を正しく描画しない（先頭の画像 + 1 テキストに縮退する）。そのためメニューバーラベルは**全要素を 1 枚のテンプレート NSImage に合成**して描画する（`MenuBarLabelRenderer`）。数値は monospaced digit フォントで描画し幅の揺れを防ぐ
 

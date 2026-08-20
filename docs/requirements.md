@@ -151,8 +151,10 @@ Room が扱う領域と macOS の許可要件：
 デフォルト:
 
 ```text
-[Room Icon] [Memory Icon]72 [Storage Icon]68
+[Memory Icon]72 [Storage Icon]68
 ```
+
+Room アイコンはメニューバーに常時表示しない（v0.1 実機フィードバック）。**[v1.2 修正]**
 
 - `RAM` `SSD` `%` `・` 等のテキストは表示しない。アイコン + 数値のみ
 - 表示順は Memory → Storage 固定
