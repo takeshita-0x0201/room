@@ -197,6 +197,7 @@ Room アイコンのクリックで表示。幅 280–320px、高さ可変、最
 ╰──────────────────────────────╯
 ```
 
+- セクション見出し（MEMORY / STORAGE / TOP PROCESSES）はアイコン付き・太字強調とする（v0.1 実機フィードバック反映） **[v1.1 修正]**
 - Make Room / Processes は Popover 内でのプッシュ遷移（1 階層）
 - Settings は独立ウィンドウ（macOS 標準）
 - Top Processes は RAM 使用量上位 3 グループ。表示はアプリ / プロセス名 + RAM 使用量のみ（CPU 等は出さない）
@@ -408,7 +409,7 @@ GENERAL
 MENU BAR
   Show Memory            ON
   Show Storage           ON
-  Display                ● Percentage ○ Free ○ Used   ← 各モードのプレビュー付き
+  Display                ● Percentage ○ Free ○ Used   ← 選択モードのプレビュー 1 行付き（実アイコン + 固定サンプル値。実測値は使わない） **[v1.1 修正]**
   Refresh Interval       ● 5 sec ○ 10 sec ○ 30 sec
 ```
 
@@ -419,7 +420,7 @@ MENU BAR
 
 - **軽量取得**（RAM 統計・SSD 容量）: Refresh Interval に従い定期更新
 - **Memory Pressure**: イベント駆動（DispatchSource）でポーリングなし
-- **プロセス一覧**: Popover 表示中のみ更新（表示中は Interval に追従、閉じたら停止）
+- **プロセス一覧**: Popover を**開いたとき**と **Quit 操作後**に更新する。表示中の定期再更新は行わない（行の再構築が進行中のクリック操作を奪うため。v0.1 実機フィードバックによる UX 修正） **[v1.1 修正]**
 - **Storage Cleanup Scan**: Make Room（Storage)を開いたときのみ
 - Popover が閉じている間の処理はメニューバー表示に必要な軽量取得のみとする
 
