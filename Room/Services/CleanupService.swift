@@ -97,24 +97,34 @@ final class CleanupService: CleanupScanning, CleanupDeleting {
         var skipped: [String] = []
         let now = Date()
         let fm = FileManager.default
-        // スキャン後に対象アプリが起動された可能性があるため、削除直前に再判定（要件 D19）
-        let runningIDs = Set(runningApps().map(\.bundleID))
         for item in items where item.state == .ready {
-            guard !item.blockingBundleIDs.contains(where: runningIDs.contains) else {
+            // 呼び出し側の allowedRoots / 条件は信用しない。
+            // ルート・age・ブロッカーはサービス自身の rules から ID で再導出する（多層防御）
+            guard let rule = rules.first(where: { $0.id == item.id }) else {
                 skipped.append(contentsOf: item.targets.map(\.url.path))
                 continue
             }
+            // 実行中アプリの再判定は「項目ごと」に行う — 前の項目を削除している間に
+            // 対象アプリが起動され得るため、開始時スナップショットを使い回さない
+            let runningIDs = Set(runningApps().map(\.bundleID))
+            guard !rule.blockingBundleIDs.contains(where: runningIDs.contains) else {
+                skipped.append(contentsOf: item.targets.map(\.url.path))
+                continue
+            }
+            let resolvedRoots = rule.roots.map { $0.resolvingSymlinksInPath() }
             for target in item.targets {
-                // 汎用 Caches の対象名は bundle id（D20）なので、実行中なら削除しない。
-                // さらに許可ルート配下・スキャン時とのファイル同一性を再検証する。
+                // 中間 symlink による許可領域外への脱出を防ぐ:
+                // 字句パスの包含に加え、symlink 解決後の実体パスでも包含を要求する
+                let resolvedTarget = target.url.resolvingSymlinksInPath()
                 guard !runningIDs.contains(target.url.lastPathComponent),
-                      CleanupTargetVerifier.isUnder(target.url, roots: item.allowedRoots),
+                      CleanupTargetVerifier.isUnder(target.url, roots: rule.roots),
+                      CleanupTargetVerifier.isUnder(resolvedTarget, roots: resolvedRoots),
                       CleanupTargetVerifier.isUnchanged(target, fileManager: fm) else {
                     skipped.append(target.url.path)
                     continue
                 }
                 let result = CleanupDeleter.deleteContents(
-                    of: target.url, olderThan: item.minFileAge, now: now, fileManager: fm)
+                    of: target.url, olderThan: rule.minFileAge, now: now, fileManager: fm)
                 deleted += result.deletedBytes
                 skipped.append(contentsOf: result.skippedPaths)
             }

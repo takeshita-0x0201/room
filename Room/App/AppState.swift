@@ -50,6 +50,7 @@ final class AppState {
     }
 
     func refreshProcesses() {
+        guard isPopoverVisible else { return }   // Popover 閉鎖後の列挙開始を防ぐ（要件 §19）
         processRefreshTask?.cancel()   // 旧タスクの遅延結果が新結果を上書きしないように
         let service = processService
         processRefreshTask = Task.detached(priority: .utility) { [weak self] in

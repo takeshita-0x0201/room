@@ -19,10 +19,16 @@ struct StorageMakeRoomView: View {
     @State private var phase: Phase = .scanning
     @State private var enabledIDs: Set<String> = []
     @State private var scanTask: Task<Void, Never>?
+    /// 画面再入時の並行 Clean を防ぐ（プロセス内で唯一の Clean 実行を保証）
+    @MainActor private static var isCleaning = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            BackHeader(title: "Make Room — Storage", route: $route, back: .makeRoom)
+            if case .cleaning = phase {
+                Text("Make Room — Storage").font(.headline)
+            } else {
+                BackHeader(title: "Make Room — Storage", route: $route, back: .makeRoom)
+            }
             content
         }
         .padding(12)
@@ -145,7 +151,7 @@ struct StorageMakeRoomView: View {
             StatRow(label: "Free now", value: ByteText.long(s.freeBytes, base: .storage1000))
         }
         if !outcome.skippedPaths.isEmpty {
-            Text("Skipped \(outcome.skippedPaths.count) items (in use)")
+            Text("Skipped \(outcome.skippedPaths.count) items")
                 .font(.caption).foregroundStyle(.secondary)
         }
         HStack {
@@ -170,10 +176,13 @@ struct StorageMakeRoomView: View {
     }
 
     private func clean(_ items: [CleanupItem]) {
+        guard !Self.isCleaning else { return }
+        Self.isCleaning = true
         let selected = items.filter { $0.state == .ready && enabledIDs.contains($0.id) }
         phase = .cleaning
         Task {
             let outcome = await cleanup.delete(selected)
+            Self.isCleaning = false
             phase = .done(outcome)
             state.refreshStats()
         }
