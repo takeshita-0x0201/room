@@ -32,6 +32,25 @@ final class ByteTextTests: XCTestCase {
             "341 / 512 GB")
     }
 
+    func testShortTerabytes() {
+        XCTAssertEqual(ByteText.short(1_200_000_000_000, base: .storage1000), "1.2T")
+        XCTAssertEqual(ByteText.short(2_000_000_000_000, base: .storage1000), "2T")
+    }
+
+    func testLongTerabytes() {
+        XCTAssertEqual(ByteText.long(1_200_000_000_000, base: .storage1000), "1.2 TB")
+    }
+
+    func testPairSwitchesToTerabytesForLargeVolumes() {
+        XCTAssertEqual(
+            ByteText.pair(used: 341_000_000_000, total: 2_000_000_000_000, base: .storage1000),
+            "0.3 / 2 TB")
+        // 従来の GB ボリュームは不変
+        XCTAssertEqual(
+            ByteText.pair(used: 341_000_000_000, total: 512_000_000_000, base: .storage1000),
+            "341 / 512 GB")
+    }
+
     func testPercent() {
         XCTAssertEqual(ByteText.percent(0.72), "72")
         XCTAssertEqual(ByteText.percent(0.666), "67")

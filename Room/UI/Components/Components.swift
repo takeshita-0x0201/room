@@ -40,6 +40,24 @@ struct StatRow: View {
     }
 }
 
+/// 使用率バー（design-system §6）。数値テキストが情報の正 — バーは視覚補助
+struct UsageBar: View {
+    let fraction: Double
+    let tint: Color
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(.quaternary)
+                Capsule().fill(tint)
+                    .frame(width: max(4, geo.size.width * min(max(fraction, 0), 1)))
+            }
+        }
+        .frame(height: 5)
+        .accessibilityHidden(true)
+    }
+}
+
 struct NavRow: View {
     let systemImage: String
     let title: String
@@ -85,10 +103,10 @@ struct BackHeader: View {
 }
 
 extension MemoryPressureLevel {
-    /// 色は異常時のみ。色だけで伝えない（テキスト併記が前提）。要件 §22 Accessibility
+    /// 状態色（design-system §3）。色だけで伝えない（テキスト併記が前提）
     var color: Color {
         switch self {
-        case .normal: .primary
+        case .normal: .blue
         case .warning: .yellow
         case .critical: .red
         case .unavailable: .secondary
