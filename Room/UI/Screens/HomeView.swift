@@ -9,6 +9,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 6) {
                 Image(nsImage: RoomIcon.menuBarImage())
+                    .accessibilityHidden(true)
                 Text("Room").font(.headline)
             }
 

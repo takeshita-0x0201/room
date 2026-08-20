@@ -123,6 +123,7 @@ struct StorageMakeRoomView: View {
                     Spacer()
                     Text("Quit \(app) to clean").font(.caption).foregroundStyle(.secondary)
                 }
+                .accessibilityElement(children: .combine)
             case .needsFullDiskAccess:
                 EmptyView()   // resultsView 側で案内済み
             }
