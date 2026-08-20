@@ -48,7 +48,12 @@ struct ProcessesView: View {
 
     @ViewBuilder private func row(for group: ProcessGroup) -> some View {
         let quittable = policy.canQuit(group)
-        HStack {
+        // Finder 等「通常終了は許可・強制終了は不可」のシステムアプリ（design-system §7）
+        let forceQuittable = quittable
+            && !ProcessProtectionPolicy.allowedSystemApps.contains(group.displayName)
+        HStack(spacing: 6) {
+            Image(nsImage: AppIconProvider.icon(for: group))
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(group.displayName).lineLimit(1)
                 if stillRunning.contains(group.id) {
@@ -59,16 +64,14 @@ struct ProcessesView: View {
             Text(ByteText.long(group.footprintBytes, base: .memory1024))
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
-            Menu {
-                Button("Quit") { quit(group) }
-                Button("Force Quit", role: .destructive) { confirmingForceQuit = group }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-            }
-            .menuStyle(.borderlessButton)
-            .frame(width: 24)
-            .disabled(!quittable)
-            .accessibilityLabel("Actions for \(group.displayName)")
+            Button("Quit") { quit(group) }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .disabled(!quittable)
+            Button("Force Quit") { confirmingForceQuit = group }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .disabled(!forceQuittable)
         }
         .font(.callout)
         .padding(.vertical, 2)
