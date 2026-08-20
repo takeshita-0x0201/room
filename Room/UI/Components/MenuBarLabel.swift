@@ -28,8 +28,21 @@ struct MenuBarLabel: View {
 
     private func accessibilityText(mode: DisplayMode) -> String {
         var parts = ["Room"]
-        if showMemory { parts.append("Memory \(MenuBarText.memoryValue(state.memory, mode: mode))") }
-        if showStorage { parts.append("Storage \(MenuBarText.storageValue(state.storage, mode: mode))") }
+        if showMemory {
+            parts.append(spoken("Memory", value: MenuBarText.memoryValue(state.memory, mode: mode), mode: mode))
+        }
+        if showStorage {
+            parts.append(spoken("Storage", value: MenuBarText.storageValue(state.storage, mode: mode), mode: mode))
+        }
         return parts.joined(separator: ", ")
+    }
+
+    /// 表示モードの意味を音声でも区別できるようにする（"5.6G" だけでは Free か Used か不明）
+    private func spoken(_ label: String, value: String, mode: DisplayMode) -> String {
+        switch mode {
+        case .percentage: "\(label) \(value) percent used"
+        case .free: "\(label) \(value) free"
+        case .used: "\(label) \(value) used"
+        }
     }
 }
