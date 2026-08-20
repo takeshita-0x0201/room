@@ -17,7 +17,7 @@ struct SectionHeader: View {
             Spacer()
             if let trailing {
                 Text(trailing)
-                    .font(.headline)
+                    .font(.body)
                     .monospacedDigit()
             }
         }

@@ -7,6 +7,7 @@ struct ProcessesView: View {
     @Binding var route: PopoverRoute
     @State private var confirmingForceQuit: ProcessGroup?
     @State private var stillRunning: Set<ProcessGroup.ID> = []
+    @State private var quitting: Set<ProcessGroup.ID> = []
 
     private let quitService: QuitServicing = QuitService()
     private let policy = ProcessProtectionPolicy(
@@ -35,6 +36,7 @@ struct ProcessesView: View {
         ) {
             Button("Force Quit", role: .destructive) {
                 if let group = confirmingForceQuit {
+                    quitting.insert(group.id)
                     quitService.forceQuit(group)
                     scheduleRecheck(group)
                 }
@@ -52,8 +54,6 @@ struct ProcessesView: View {
         let forceQuittable = quittable
             && !ProcessProtectionPolicy.allowedSystemApps.contains(group.displayName)
         HStack(spacing: 6) {
-            Image(nsImage: AppIconProvider.icon(for: group))
-                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(group.displayName).lineLimit(1)
                 if stillRunning.contains(group.id) {
@@ -64,20 +64,29 @@ struct ProcessesView: View {
             Text(ByteText.long(group.footprintBytes, base: .memory1024))
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
-            Button("Quit") { quit(group) }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .disabled(!quittable)
-            Button("Force Quit") { confirmingForceQuit = group }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .disabled(!forceQuittable)
+            if quitting.contains(group.id) {
+                // Quit 要求中はスピナーで進行を示す（design-system §7）
+                ProgressView()
+                    .controlSize(.small)
+                    .frame(width: 110, alignment: .center)
+                    .accessibilityLabel("Quitting \(group.displayName)")
+            } else {
+                Button("Quit") { quit(group) }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .disabled(!quittable)
+                Button("Force Quit") { confirmingForceQuit = group }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .disabled(!forceQuittable)
+            }
         }
         .font(.body)
         .padding(.vertical, 2)
     }
 
     private func quit(_ group: ProcessGroup) {
+        quitting.insert(group.id)
         quitService.requestQuit(group)
         scheduleRecheck(group)
     }
@@ -89,6 +98,7 @@ struct ProcessesView: View {
             if quitService.isRunning(group) {
                 stillRunning.insert(group.id)
             }
+            quitting.remove(group.id)
             state.refreshProcesses()
         }
     }

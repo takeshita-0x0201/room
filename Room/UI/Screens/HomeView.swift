@@ -8,15 +8,9 @@ struct HomeView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 26) {
             header
-
-            HStack(alignment: .top, spacing: 16) {
-                memoryColumn
-                Divider()
-                storageColumn
-            }
-
+            memorySection
+            storageSection
             topProcesses
-
             footer
         }
         .padding(16)
@@ -57,7 +51,7 @@ struct HomeView: View {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    @ViewBuilder private var memoryColumn: some View {
+    @ViewBuilder private var memorySection: some View {
         VStack(alignment: .leading, spacing: 6) {
             SectionHeader(title: "Memory", systemImage: "memorychip",
                           trailing: state.memory.map { ByteText.percent($0.usedFraction) + "%" })
@@ -70,11 +64,10 @@ struct HomeView: View {
                 StatRow(label: "Swap", value: ByteText.long(m.swapUsedBytes, base: .memory1024))
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 
-    @ViewBuilder private var storageColumn: some View {
+    @ViewBuilder private var storageSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             SectionHeader(title: "Storage", systemImage: "internaldrive",
                           trailing: state.storage.map { ByteText.percent($0.usedFraction) + "%" })
@@ -85,7 +78,6 @@ struct HomeView: View {
                 StatRow(label: "Free", value: ByteText.long(s.freeBytes, base: .storage1000))
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 
