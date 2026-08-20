@@ -18,7 +18,7 @@ struct PopoverRootView: View {
             case .storageMakeRoom: StorageMakeRoomView(route: $route)
             }
         }
-        .frame(width: 300)
+        .frame(width: 360)
         .onAppear {
             route = .home
             state.isPopoverVisible = true

@@ -59,7 +59,7 @@ struct UsageBar: View {
 }
 
 struct NavRow: View {
-    let systemImage: String
+    let icon: Image
     let title: String
     var showsChevron = false
     let action: () -> Void
@@ -67,7 +67,7 @@ struct NavRow: View {
     var body: some View {
         Button(action: action) {
             HStack {
-                Image(systemName: systemImage).frame(width: 16)
+                icon.frame(width: 16)
                 Text(title)
                 Spacer()
                 if showsChevron {

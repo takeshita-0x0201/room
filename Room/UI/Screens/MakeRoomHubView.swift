@@ -8,7 +8,7 @@ struct MakeRoomHubView: View {
         VStack(alignment: .leading, spacing: 12) {
             BackHeader(title: "Make Room", route: $route, back: .home)
 
-            NavRow(systemImage: "memorychip", title: "Memory", showsChevron: true) {
+            NavRow(icon: Image(systemName: "memorychip"), title: "Memory", showsChevron: true) {
                 route = .memoryMakeRoom
             }
             if let m = state.memory {
@@ -20,7 +20,7 @@ struct MakeRoomHubView: View {
 
             Divider()
 
-            NavRow(systemImage: "internaldrive", title: "Storage", showsChevron: true) {
+            NavRow(icon: Image(systemName: "internaldrive"), title: "Storage", showsChevron: true) {
                 route = .storageMakeRoom
             }
             Text(storageCaption)

@@ -7,32 +7,57 @@ struct HomeView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 6) {
-                Image(nsImage: RoomIcon.menuBarImage())
-                    .accessibilityHidden(true)
-                Text("Room").font(.headline)
+            header
+
+            HStack(alignment: .top, spacing: 16) {
+                memoryColumn
+                Divider()
+                storageColumn
             }
 
-            memorySection
-            storageSection
             topProcesses
 
             Divider()
 
-            NavRow(systemImage: "cube.transparent", title: "Make Room") { route = .makeRoom }
-            NavRow(systemImage: "circle.grid.2x2", title: "Processes", showsChevron: true) { route = .processes }
-            NavRow(systemImage: "gearshape", title: "Settings") {
-                openSettings()
-                NSApp.activate(ignoringOtherApps: true)
+            NavRow(icon: Image(nsImage: RoomIcon.menuBarImage()), title: "Make Room") {
+                route = .makeRoom
+            }
+            NavRow(icon: Image(systemName: "gauge"), title: "Processes", showsChevron: true) {
+                route = .processes
+            }
+            NavRow(icon: Image(systemName: "gearshape"), title: "Settings") {
+                openSettingsWindow()
             }
         }
         .padding(12)
     }
 
-    @ViewBuilder private var memorySection: some View {
+    private var header: some View {
+        HStack(spacing: 6) {
+            Image(nsImage: RoomIcon.menuBarImage())
+                .accessibilityHidden(true)
+            Text("Room").font(.headline)
+            Spacer()
+            Button { openSettingsWindow() } label: {
+                Image(systemName: "gearshape")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Settings")
+        }
+    }
+
+    private func openSettingsWindow() {
+        openSettings()
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @ViewBuilder private var memoryColumn: some View {
         VStack(alignment: .leading, spacing: 4) {
-            SectionHeader(title: "MEMORY", systemImage: "memorychip", trailing: state.memory.map { ByteText.percent($0.usedFraction) + "%" })
+            SectionHeader(title: "MEMORY", systemImage: "memorychip",
+                          trailing: state.memory.map { ByteText.percent($0.usedFraction) + "%" })
             if let m = state.memory {
+                UsageBar(fraction: m.usedFraction, tint: .blue)
                 Text(ByteText.pair(used: m.usedBytes, total: m.totalBytes, base: .memory1024))
                     .font(.callout).monospacedDigit()
                 StatRow(label: "Free", value: ByteText.long(m.freeBytes, base: .memory1024))
@@ -40,18 +65,22 @@ struct HomeView: View {
                 StatRow(label: "Swap", value: ByteText.long(m.swapUsedBytes, base: .memory1024))
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 
-    @ViewBuilder private var storageSection: some View {
+    @ViewBuilder private var storageColumn: some View {
         VStack(alignment: .leading, spacing: 4) {
-            SectionHeader(title: "STORAGE", systemImage: "internaldrive", trailing: state.storage.map { ByteText.percent($0.usedFraction) + "%" })
+            SectionHeader(title: "STORAGE", systemImage: "internaldrive",
+                          trailing: state.storage.map { ByteText.percent($0.usedFraction) + "%" })
             if let s = state.storage {
+                UsageBar(fraction: s.usedFraction, tint: .green)
                 Text(ByteText.pair(used: s.usedBytes, total: s.totalBytes, base: .storage1000))
                     .font(.callout).monospacedDigit()
                 StatRow(label: "Free", value: ByteText.long(s.freeBytes, base: .storage1000))
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 
@@ -59,8 +88,17 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 4) {
             SectionHeader(title: "TOP PROCESSES", systemImage: "chart.bar")
             ForEach(state.processes.prefix(3)) { group in
-                StatRow(label: group.displayName,
-                        value: ByteText.long(group.footprintBytes, base: .memory1024))
+                HStack(spacing: 6) {
+                    Image(nsImage: AppIconProvider.icon(for: group))
+                        .accessibilityHidden(true)
+                    Text(group.displayName).lineLimit(1)
+                    Spacer()
+                    Text(ByteText.long(group.footprintBytes, base: .memory1024))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                .font(.callout)
+                .accessibilityElement(children: .combine)
             }
         }
     }
