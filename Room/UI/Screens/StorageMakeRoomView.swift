@@ -93,8 +93,9 @@ struct StorageMakeRoomView: View {
 
         HStack {
             Spacer()
+            // 主要アクションはブルーの Review 単一（design-system §8）。削除は必ず Review 経由
             Button("Review") { beginReview(items) }
-            Button("Make Room") { beginReview(items) }   // どちらも Review 経由（削除の直行路なし）
+                .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
         }
         .disabled(!items.contains { $0.state == .ready })
@@ -138,6 +139,7 @@ struct StorageMakeRoomView: View {
             Spacer()
             Button("Cancel") { phase = .results(items) }
             Button("Clean") { clean(items) }
+                .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
                 .disabled(enabledIDs.isEmpty)
         }

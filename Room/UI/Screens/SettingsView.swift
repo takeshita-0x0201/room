@@ -30,24 +30,11 @@ struct SettingsView: View {
                 Toggle("Show Memory", isOn: $showMemory)
                 Toggle("Show Storage", isOn: $showStorage)
 
-                Picker("Display", selection: $displayModeRaw) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Display")
                     ForEach(DisplayMode.allCases, id: \.rawValue) { mode in
-                        Text(mode.title).tag(mode.rawValue)
+                        displayModeRow(mode)
                     }
-                }
-                .pickerStyle(.radioGroup)
-
-                LabeledContent("Preview") {
-                    HStack(spacing: 4) {
-                        Image(nsImage: RoomIcon.menuBarImage())
-                        Image(systemName: "memorychip")
-                        Text(sampleValues.memory)
-                        Image(systemName: "internaldrive")
-                        Text(sampleValues.storage)
-                    }
-                    .font(.callout)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
                 }
 
                 Picker("Refresh Interval", selection: $refreshInterval) {
@@ -55,7 +42,7 @@ struct SettingsView: View {
                     Text("10 sec").tag(10)
                     Text("30 sec").tag(30)
                 }
-                .pickerStyle(.radioGroup)
+                .pickerStyle(.menu)
             }
         }
         .formStyle(.grouped)
@@ -63,9 +50,43 @@ struct SettingsView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    /// プレビューは固定サンプル値（要件 §19。実測値だと切替の意図が伝わりにくい）
-    private var sampleValues: (memory: String, storage: String) {
-        switch DisplayMode(rawValue: displayModeRaw) ?? .percentage {
+    private func displayModeRow(_ mode: DisplayMode) -> some View {
+        let isSelected = displayModeRaw == mode.rawValue
+        return Button {
+            displayModeRaw = mode.rawValue
+        } label: {
+            HStack {
+                Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
+                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
+                Text(mode.title)
+                Spacer()
+                previewChip(for: mode)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(mode.title)\(isSelected ? ", selected" : "")")
+    }
+
+    /// 各モードのプレビューチップ（design-system §9。固定サンプル値）
+    private func previewChip(for mode: DisplayMode) -> some View {
+        let sample = sampleValues(for: mode)
+        return HStack(spacing: 4) {
+            Image(nsImage: RoomIcon.menuBarImage(pointSize: 12))
+            Image(systemName: "memorychip")
+            Text(sample.memory)
+            Image(systemName: "internaldrive")
+            Text(sample.storage)
+        }
+        .font(.caption)
+        .monospacedDigit()
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
+    }
+
+    private func sampleValues(for mode: DisplayMode) -> (memory: String, storage: String) {
+        switch mode {
         case .percentage: ("72", "68")
         case .free: ("5.6G", "171G")
         case .used: ("18.4G", "341G")
