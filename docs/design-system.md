@@ -1,0 +1,94 @@
+# Room Design System v1.0
+
+> 出典: ユーザー提供デザインシート（2026-08-20）。UI 意匠の**正**はこの文書とする。
+> 機能仕様の正は `requirements.md`（本文書は「どう見せるか」のみを定める）。
+
+## 1. ブランドアイコン（Room）
+
+- モチーフ: **面のない立体空間** — 底面 + 奥の左・右面の 3 面のみのワイヤーフレーム
+- 原則: 面は塗らない / 単色 / 幾何学的 / 小サイズ（16–18px）でも判別可能 / Light・Dark 対応（Template Image）
+- 意味: 空間・余白・空き・Room（アプリケーション識別）
+- 実装: `Room/UI/Icons/RoomIcon.swift`（NSBezierPath、isTemplate）
+
+## 2. アイコンセット（統一デザイン言語）
+
+| アイコン | 意味 | v0.1 実装 | 将来 |
+|---|---|---|---|
+| Room（ワイヤーフレームの部屋） | アプリ識別 | RoomIcon | — |
+| Memory（縦長モジュール型グリフ） | RAM の状態 | SF Symbols `memorychip` | カスタムグリフ（線幅・角丸を Room アイコンと統一） |
+| Storage（ドライブ型グリフ） | SSD の状態 | SF Symbols `internaldrive` | 同上 |
+
+方針: 線の太さ・角丸・抽象度をブランドアイコンと揃え、3 つで 1 つの言語に見えること。
+
+## 3. カラー
+
+| 用途 | 色 |
+|---|---|
+| アクセント / 主要アクション（Review ボタン、選択状態） | システムブルー（accentColor） |
+| Memory 使用率バー | ブルー |
+| Storage 使用率バー | グリーン |
+| Pressure: Normal | **ブルー**（ドット + テキスト） |
+| Pressure: Warning | イエロー |
+| Pressure: Critical | レッド |
+| 文字・背景 | システム標準（primary / secondary、Dark・Light 自動） |
+
+- 状態は**必ずテキスト併記**（色だけで伝えない — アクセシビリティ原則は維持）
+- ※ v1.1 要件の「通常状態は無彩色」原則は本デザイン決定で改訂（Normal ブルー・使用率バーの常時カラーを許容）
+
+## 4. 数値フォーマット
+
+| 文脈 | 形式 | 例 |
+|---|---|---|
+| メニューバー（短縮） | 単位 1 文字・小数は 100 未満で 1 桁 | `824M` `3.2G` `171G` `1.2T` |
+| ポップオーバー（詳細） | 単位 + スペース | `824 MB` `3.2 GB` `171 GB` `1.2 TB` |
+
+- **TB 帯対応を追加**（現行 ByteText は G 止まり）
+- 等幅数字（monospaced digits）必須
+
+## 5. メニューバー表示
+
+```
+[Room] [Memory]72 [Storage]68
+```
+
+- アイコン + 数値のみ。単位・%・ラベル文字は出さない
+- 表示モード: Percentage（既定）→ `72 / 68`、Free → `5.6G / 171G`、Used → `18.4G / 341G`
+
+## 6. メインポップオーバー
+
+- **ヘッダー**: Room アイコン + `Room` + 右端に歯車（Settings ショートカット）
+- **MEMORY / STORAGE の 2 カラムカード**:
+  - 見出し（太字）+ 右に `%`
+  - **使用率プログレスバー**（Memory=ブルー / Storage=グリーン、細め・角丸）
+  - `used / total`
+  - Memory 側: `Pressure <状態>`（状態語は状態色）+ `Swap`
+  - Storage 側: `Free`
+- **TOP PROCESSES**: 各行に**アプリアイコン** + 名前 + 使用量（上位 3 件）
+- **フッター行**: `Make Room`（Room アイコン）/ `Processes`（ゲージ型アイコン + chevron）/ `Settings`（歯車）
+
+## 7. Processes 一覧
+
+- 行構成: **アプリアイコン** + 名前 + 使用量 + **インラインの `Quit` / `Force Quit` ボタン**（控えめな bordered スタイル）
+- 保護対象は該当ボタンをグレー無効化（例: Finder は Force Quit 無効）
+- ellipsis メニュー方式は廃止（ワンクリックで操作可能に）
+
+## 8. Make Room > Storage
+
+- カテゴリ行: 名前 + サイズ + chevron
+- `Total` 行 + 右に**ブルーの `Review` ボタン**（primary action / borderedProminent）
+
+## 9. Settings > Display
+
+- ラジオ各行の右に**プレビューチップ**（Room・Memory・Storage アイコン + 固定サンプル値、角丸背景）
+  - Percentage: `72 / 68`、Free: `5.6G / 171G`、Used: `18.4G / 341G`
+- Refresh Interval はポップアップメニュー（`5 sec`）
+
+## 10. 実装フェーズ（v0.1.x デザイン反映）
+
+| フェーズ | 内容 |
+|---|---|
+| D1 | 基盤: ByteText TB 対応 / Pressure カラー（Normal=ブルー）/ UsageBar コンポーネント / アプリアイコン取得ヘルパー |
+| D2 | ポップオーバー: 2 カラムカード + バー + ヘッダー歯車 + TOP PROCESSES アイコン + フッター行アイコン |
+| D3 | Processes: アイコン + インラインボタン行 |
+| D4 | Make Room Storage: カテゴリ行 + ブルー Review / Settings: プレビューチップ + ポップアップ |
+| D5（将来） | Memory / Storage カスタムグリフ化 |

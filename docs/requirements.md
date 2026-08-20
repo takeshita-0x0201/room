@@ -136,6 +136,7 @@ Room が扱う領域と macOS の許可要件：
 - 常時アニメーションなし / 色を多用しない / 深い階層を作らない（最大 2 階層）
 - 設定を増やしすぎない / 普段は存在感を出さない
 - UI 言語は**英語**（v0.1）。文字列一元管理レイヤは v0.1 では設けない（YAGNI。ローカライズ着手時に導入） **[v1.1 決定]**
+- **UI 意匠（アイコンセット・カラー・コンポーネント様式・数値フォーマットの見せ方）の正は `docs/design-system.md`** とする（ユーザー提供デザインシートを構造化、2026-08-20）。使用率バー・Pressure 状態色（Normal=青）等の常時カラーはこれに従い、v1.1 の「通常状態は無彩色」原則を改訂する **[v1.2 決定]**
 
 ## 8. Room アイコン
 
@@ -494,7 +495,7 @@ Analytics / Telemetry / Usage Tracking / アカウント / 不要なネットワ
 - キーボードナビゲーション
 - Light / Dark Mode 対応
 - 十分なコントラスト
-- 色以外の状態表現（Pressure はテキスト "Normal/Warning/Critical" を必ず併記。色は Warning=黄系 / Critical=赤系のみに使用、通常時は標準 foreground）
+- 色以外の状態表現（Pressure はテキスト "Normal/Warning/Critical" を必ず併記。状態色は Normal=青 / Warning=黄 / Critical=赤。使用率バー等の常時カラーは `design-system.md` §3 に従う） **[v1.2 修正]**
 
 ### OSS 方針
 
