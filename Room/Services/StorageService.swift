@@ -14,7 +14,7 @@ final class StorageService: StorageStatsProviding {
     func snapshot() -> StorageSnapshot? {
         guard let values = try? volumeURL.resourceValues(forKeys: [
             .volumeTotalCapacityKey,
-            .volumeAvailableCapacityForImportantUsageKey,   // Finder と同じ「重要用途で使える空き」(purgeable 込み)
+            .volumeAvailableCapacityForImportantUsageKey,   // same "available for important usage" free space as Finder (incl. purgeable)
         ]),
             let total = values.volumeTotalCapacity,
             let free = values.volumeAvailableCapacityForImportantUsage

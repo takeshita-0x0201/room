@@ -1,6 +1,6 @@
 import Foundation
 
-/// クリーンアップ対象の定義（要件 §18.2）。パスの正はこのファイルのみ。
+/// Definitions of cleanup targets (requirements §18.2). This file is the single source of truth for paths.
 enum CleanupRules {
     static let day: TimeInterval = 86_400
 

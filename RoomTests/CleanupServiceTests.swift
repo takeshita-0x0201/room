@@ -1,7 +1,7 @@
 import XCTest
 @testable import Room
 
-/// CleanupService の scan/delete をフィクスチャ限定で検証する（実ユーザーデータ禁止）。
+/// Verifies CleanupService scan/delete strictly against fixtures (real user data is forbidden).
 final class CleanupServiceTests: XCTestCase {
     private var fixture: URL!
 
@@ -55,7 +55,7 @@ final class CleanupServiceTests: XCTestCase {
 
         XCTAssertGreaterThan(outcome.deletedBytes, 0)
         XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
-        XCTAssertTrue(FileManager.default.fileExists(atPath: root.path))   // ルートは残す
+        XCTAssertTrue(FileManager.default.fileExists(atPath: root.path))   // root is kept
     }
 
     func testDeleteSkipsWhenBlockingAppIsRunningAtDeleteTime() async throws {
@@ -68,13 +68,13 @@ final class CleanupServiceTests: XCTestCase {
         let outcome = await sut.delete([item("r", target: target)])
 
         XCTAssertEqual(outcome.deletedBytes, 0)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: file.path))   // 何も消えていない
+        XCTAssertTrue(FileManager.default.fileExists(atPath: file.path))   // nothing was deleted
         XCTAssertFalse(outcome.skippedPaths.isEmpty)
     }
 
     func testDeleteRejectsSymlinkEscapedTarget() async throws {
-        // allowed/link → outside への中間 symlink。leaf 自体は通常ディレクトリなので
-        // makeTarget は通るが、解決後パスの包含検証で拒否されなければならない
+        // allowed/link → intermediate symlink to outside. The leaf itself is a normal directory, so
+        // makeTarget passes, but the resolved-path containment check must reject it
         let allowed = fixture.appendingPathComponent("allowed")
         try FileManager.default.createDirectory(at: allowed, withIntermediateDirectories: true)
         let outside = fixture.appendingPathComponent("outside")
@@ -89,17 +89,17 @@ final class CleanupServiceTests: XCTestCase {
         let outcome = await sut.delete([item("r", target: target)])
 
         XCTAssertEqual(outcome.deletedBytes, 0)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: victim.path))   // 領域外は無傷
+        XCTAssertTrue(FileManager.default.fileExists(atPath: victim.path))   // the area outside is untouched
         XCTAssertTrue(outcome.skippedPaths.contains(escaped.path))
     }
 
     func testDeleteIgnoresForgedItemsWithUnknownRuleID() async throws {
-        // 呼び出し側がルールに無い ID で forged した item を渡しても、
-        // サービスの rules に無い ID は削除されない（多層防御 — ID 以外は信用しない）
+        // Even if the caller passes a forged item with an ID absent from the rules,
+        // IDs unknown to the service's rules are never deleted (defense in depth — nothing but the ID is trusted)
         let root = fixture.appendingPathComponent("cache")
         let file = try makeFile("cache/x.bin")
         let target = try XCTUnwrap(CleanupTargetVerifier.makeTarget(root, fileManager: .default))
-        let sut = service(rules: [])   // ルール無し
+        let sut = service(rules: [])   // no rules
 
         let outcome = await sut.delete([item("forged", target: target)])
 

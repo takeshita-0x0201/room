@@ -1,26 +1,26 @@
 import AppKit
 import Observation
 
-/// アプリ唯一の状態ハブ。更新ポリシー（要件 §19 Refresh Policy）:
-/// - RAM/SSD 統計: Refresh Interval のタイマーで定期更新（軽量）
-/// - Memory Pressure: DispatchSource イベント駆動（ポーリングなし）
-/// - プロセス一覧: Popover を開いたときと Quit 操作後のみ更新
-///   （表示中の定期再構築は行の差し替えでクリック操作を奪うため行わない）
+/// The app's single state hub. Refresh policy (requirements §19):
+/// - RAM/SSD stats: refreshed periodically on a Refresh Interval timer (lightweight)
+/// - Memory Pressure: DispatchSource event-driven (no polling)
+/// - Process list: refreshed only when the Popover opens and after Quit operations
+///   (no periodic rebuild while displayed, since rebuilding rows would steal click actions)
 @Observable
 @MainActor
 final class AppState {
     var memory: MemorySnapshot?
     var storage: StorageSnapshot?
     var processes: [ProcessGroup] = []
-    /// 直近の Storage スキャンで「今すぐ削除可能」だった合計（要件 §16 のハブ表示用）。
-    /// Clean 実行後は nil に戻し、次回スキャンまで静的表示にする。
+    /// Total that the latest Storage scan found "deletable right now" (for the §16 hub display).
+    /// Reset to nil after a Clean runs so the display stays static until the next scan.
     var lastCleanupReadyBytes: UInt64?
     var isPopoverVisible = false {
         didSet {
             if isPopoverVisible {
                 refreshProcesses()
             } else {
-                processRefreshTask?.cancel()   // 閉じたら進行中の列挙を止める
+                processRefreshTask?.cancel()   // stop an in-flight enumeration when closed
             }
         }
     }
@@ -48,7 +48,7 @@ final class AppState {
     }
 
     func refreshStats() {
-        // 値が変わらない限り再代入しない — 無変化の再描画（クリックを奪う一因）を避ける
+        // Don't reassign unless the value changed — avoids no-change redraws (a cause of stolen clicks)
         let newMemory = memoryService.snapshot()
         if newMemory != memory { memory = newMemory }
         let newStorage = storageService.snapshot()
@@ -56,8 +56,8 @@ final class AppState {
     }
 
     func refreshProcesses() {
-        guard isPopoverVisible else { return }   // Popover 閉鎖後の列挙開始を防ぐ（要件 §19）
-        processRefreshTask?.cancel()   // 旧タスクの遅延結果が新結果を上書きしないように
+        guard isPopoverVisible else { return }   // prevent starting an enumeration after the Popover closes (requirements §19)
+        processRefreshTask?.cancel()   // so a stale task's late result doesn't overwrite the new one
         let service = processService
         processRefreshTask = Task.detached(priority: .utility) { [weak self] in
             let groups = service.groups()

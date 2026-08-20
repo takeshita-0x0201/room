@@ -1,8 +1,8 @@
 import AppKit
 
-/// メニューバーラベルを 1 枚のテンプレート画像に合成する（design-system §5）。
-/// MenuBarExtra のラベルは複数の Image/Text を正しく描画しないため、
-/// Room アイコン + Memory/Storage グリフ + 数値をここで 1 つの NSImage にまとめる。
+/// Composes the menu bar label into a single template image (design-system §5).
+/// MenuBarExtra's label does not render multiple Image/Text correctly, so the
+/// Room icon + Memory/Storage glyphs + values are combined into one NSImage here.
 enum MenuBarLabelRenderer {
     static func image(memory: String?, storage: String?) -> NSImage {
         let height: CGFloat = 20
@@ -11,7 +11,7 @@ enum MenuBarLabelRenderer {
         let font = NSFont.monospacedDigitSystemFont(ofSize: 14, weight: .medium)
         let textAttributes: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: NSColor.black,   // template 画像なので実際の色は OS が決める
+            .foregroundColor: NSColor.black,   // a template image, so the actual color is decided by the OS
         ]
         let symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
 
@@ -29,7 +29,7 @@ enum MenuBarLabelRenderer {
             segments.append((symbol("internaldrive"),
                              NSAttributedString(string: storage, attributes: textAttributes)))
         }
-        // 両方 OFF のときはラベルが空になりクリック不能になるため、Room アイコンのみ表示
+        // With both OFF the label would be empty and unclickable, so show only the Room icon
         if segments.isEmpty {
             segments = [(RoomIcon.menuBarImage(pointSize: 18), nil)]
         }

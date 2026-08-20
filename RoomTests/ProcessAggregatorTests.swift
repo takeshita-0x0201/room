@@ -9,7 +9,7 @@ final class ProcessAggregatorTests: XCTestCase {
 
     func testGroupsHelpersIntoOutermostAppBundle() {
         let chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-        // Helper は入れ子 .app — 最初（最外）の .app で束ねる
+        // Helper is a nested .app — bundle it by the first (outermost) .app
         let helper = "/Applications/Google Chrome.app/Contents/Frameworks/F.framework/Helpers/Google Chrome Helper.app/Contents/MacOS/Google Chrome Helper"
         let groups = ProcessAggregator.aggregate([
             raw(100, "Google Chrome", chrome, 1_000_000_000),
@@ -18,7 +18,7 @@ final class ProcessAggregatorTests: XCTestCase {
         XCTAssertEqual(groups.count, 1)
         XCTAssertEqual(groups[0].displayName, "Google Chrome")
         XCTAssertEqual(groups[0].footprintBytes, 3_200_000_000)
-        XCTAssertEqual(groups[0].mainPid, 100)   // Contents/MacOS 直下が main
+        XCTAssertEqual(groups[0].mainPid, 100)   // directly under Contents/MacOS is main
         XCTAssertEqual(groups[0].pids.sorted(), [100, 101])
     }
 

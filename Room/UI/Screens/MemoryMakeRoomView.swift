@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Memory Pressure Manager（要件 §17）。
-/// Normal → "No action needed"。Warning/Critical → 高メモリプロセスを選択して Quit。
+/// Memory Pressure Manager (requirements §17).
+/// Normal → "No action needed". Warning/Critical → select high-memory processes to quit.
 struct MemoryMakeRoomView: View {
     @Environment(AppState.self) private var state
     @Binding var route: PopoverRoute
@@ -11,7 +11,7 @@ struct MemoryMakeRoomView: View {
     private let policy = ProcessProtectionPolicy(
         currentUid: getuid(),
         ownPid: ProcessInfo.processInfo.processIdentifier)
-    private static let minimumFootprint: UInt64 = 200 * 1024 * 1024   // 200 MB 未満は候補にしない
+    private static let minimumFootprint: UInt64 = 200 * 1024 * 1024   // under 200 MB is not a candidate
 
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
@@ -28,7 +28,7 @@ struct MemoryMakeRoomView: View {
                         .foregroundStyle(.secondary)
                         .padding(.top, 4)
                 case .unavailable:
-                    // 取得不可を「問題なし」と誤認させない（要件 D21）
+                    // Don't let an unavailable reading read as "no problem" (requirements D21)
                     Text("Pressure unavailable")
                         .foregroundStyle(.secondary)
                         .padding(.top, 4)
@@ -74,7 +74,7 @@ struct MemoryMakeRoomView: View {
             .toggleStyle(.checkbox)
         }
 
-        // 「確保を保証する表示にはしない」（要件 §17.4）— Potential という文言を変えない
+        // Never present as a guaranteed recovery (requirements §17.4) — keep the "Potential" wording
         StatRow(label: "Potential recovery",
                 value: ByteText.long(potentialRecovery, base: .memory1024))
             .padding(.top, 4)

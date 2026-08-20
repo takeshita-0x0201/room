@@ -22,7 +22,7 @@ final class CleanupRulesTests: XCTestCase {
     }
 
     func testAgeThresholds() {
-        XCTAssertEqual(rules.first { $0.id == "logs" }!.minFileAge, 7 * 86_400)      // 要件 D14
+        XCTAssertEqual(rules.first { $0.id == "logs" }!.minFileAge, 7 * 86_400)      // requirements D14
         XCTAssertEqual(rules.first { $0.id == "temp-files" }!.minFileAge, 3 * 86_400)
     }
 

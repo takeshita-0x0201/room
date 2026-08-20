@@ -6,9 +6,9 @@ enum CleanupDeleter {
         var skippedPaths: [String] = []
     }
 
-    /// root の「中身」を削除する。root 自体は残す（要件 §18.5）。
-    /// age 指定時は古い通常ファイルのみ削除しディレクトリ構造は保つ。
-    /// エラーは項目単位でスキップして続行（要件 §18.6）。
+    /// Deletes the "contents" of root; root itself is kept (requirements §18.5).
+    /// With an age, only old regular files are deleted and the directory structure is kept.
+    /// Errors skip that item and continue (requirements §18.6).
     static func deleteContents(of root: URL, olderThan age: TimeInterval?,
                                now: Date, fileManager fm: FileManager) -> Result {
         var result = Result()

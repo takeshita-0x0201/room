@@ -4,8 +4,8 @@ enum DirectorySizer {
     private static let keys: Set<URLResourceKey> =
         [.isRegularFileKey, .contentModificationDateKey, .totalFileAllocatedSizeKey]
 
-    /// url 配下（url 自身がファイルならそれ）の実割当サイズ合計。
-    /// age 指定時は「最終更新が age より古い通常ファイル」のみ数える。
+    /// Total allocated size under url (or of url itself if it is a file).
+    /// With an age, only regular files whose last modification is older than age are counted.
     static func size(of url: URL, olderThan age: TimeInterval?, now: Date = Date()) -> UInt64 {
         if let values = try? url.resourceValues(forKeys: keys), values.isRegularFile == true {
             return countedSize(values, age: age, now: now)

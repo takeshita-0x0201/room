@@ -4,7 +4,7 @@ protocol ProcessListProviding {
     func groups() -> [ProcessGroup]
 }
 
-/// libproc / sysctl 呼び出し層。現在ユーザー所有のプロセスのみ返す（要件 §6.3）。
+/// libproc / sysctl call layer. Returns only processes owned by the current user (requirements §6.3).
 final class ProcessService: ProcessListProviding {
     func groups() -> [ProcessGroup] {
         ProcessAggregator.aggregate(rawProcesses())
@@ -25,7 +25,7 @@ final class ProcessService: ProcessListProviding {
     }
 
     static func allPids() -> [pid_t] {
-        let estimated = proc_listallpids(nil, 0)   // 戻り値は pid 数
+        let estimated = proc_listallpids(nil, 0)   // return value is the pid count
         guard estimated > 0 else { return [] }
         var pids = [pid_t](repeating: 0, count: Int(estimated) + 64)
         let count = proc_listallpids(&pids, Int32(pids.count * MemoryLayout<pid_t>.size))
@@ -33,7 +33,7 @@ final class ProcessService: ProcessListProviding {
         return Array(pids.prefix(Int(count))).filter { $0 > 0 }
     }
 
-    /// ri_phys_footprint（Activity Monitor の "Memory" 列と同じ指標）
+    /// ri_phys_footprint (the same metric as Activity Monitor's "Memory" column)
     static func footprint(of pid: pid_t) -> UInt64? {
         var info = rusage_info_current()
         let ok = withUnsafeMutablePointer(to: &info) { pointer -> Bool in

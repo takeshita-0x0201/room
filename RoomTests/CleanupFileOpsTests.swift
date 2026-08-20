@@ -30,7 +30,7 @@ final class CleanupFileOpsTests: XCTestCase {
         try makeFile("a/one.bin", bytes: 1_000)
         try makeFile("a/b/two.bin", bytes: 2_000)
         let size = DirectorySizer.size(of: fixture, olderThan: nil)
-        XCTAssertGreaterThanOrEqual(size, 3_000)   // allocated size はブロック単位で切り上がる
+        XCTAssertGreaterThanOrEqual(size, 3_000)   // allocated size rounds up to block size
     }
 
     func testSizeWithAgeFilterCountsOnlyOldFiles() throws {
@@ -48,7 +48,7 @@ final class CleanupFileOpsTests: XCTestCase {
         let result = CleanupDeleter.deleteContents(of: root, olderThan: nil,
                                                    now: Date(), fileManager: .default)
         XCTAssertGreaterThan(result.deletedBytes, 0)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: root.path))       // ルートは残す
+        XCTAssertTrue(FileManager.default.fileExists(atPath: root.path))       // root is kept
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: root.path), [])
     }
 
@@ -63,7 +63,7 @@ final class CleanupFileOpsTests: XCTestCase {
             atPath: root.appendingPathComponent("old.log").path))
     }
 
-    // --- 削除直前の再検証（要件 D19: TOCTOU / symlink 対策） ---
+    // --- Re-verification right before deletion (requirements D19: TOCTOU / symlink protection) ---
 
     func testVerifierAcceptsUnchangedDirectory() throws {
         _ = try makeFile("cache/x.bin", bytes: 10)
@@ -76,7 +76,7 @@ final class CleanupFileOpsTests: XCTestCase {
         _ = try makeFile("cache/x.bin", bytes: 10)
         let root = fixture.appendingPathComponent("cache")
         let target = try XCTUnwrap(CleanupTargetVerifier.makeTarget(root, fileManager: .default))
-        // スキャン後にディレクトリが差し替えられた状況（inode が変わる）
+        // A situation where the directory was swapped out after the scan (the inode changes)
         try FileManager.default.removeItem(at: root)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         XCTAssertFalse(CleanupTargetVerifier.isUnchanged(target, fileManager: .default))

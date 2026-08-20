@@ -9,9 +9,9 @@ struct RawProcess: Equatable {
 }
 
 struct ProcessGroup: Identifiable, Equatable {
-    let id: String              // bundlePath または "pid:<pid>"
+    let id: String              // bundlePath or "pid:<pid>"
     let displayName: String
-    let bundlePath: String?     // ".../Google Chrome.app"（.app グループのみ）
+    let bundlePath: String?     // ".../Google Chrome.app" (only for .app groups)
     let mainPath: String?
     let mainPid: pid_t
     let pids: [pid_t]

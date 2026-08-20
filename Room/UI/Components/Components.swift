@@ -40,7 +40,7 @@ struct StatRow: View {
     }
 }
 
-/// Pressure 行: 色丸（●）+ 通常色テキスト。状態テキスト自体には着色しない（design-system §3）
+/// Pressure row: color dot (●) + text in the normal color. The state text itself is not colored (design-system §3)
 struct PressureRow: View {
     let pressure: MemoryPressureLevel
 
@@ -60,7 +60,7 @@ struct PressureRow: View {
     }
 }
 
-/// 使用率バー（design-system §6）。数値テキストが情報の正 — バーは視覚補助
+/// Usage bar (design-system §6). The numeric text is the authoritative information — the bar is a visual aid
 struct UsageBar: View {
     let fraction: Double
     let tint: Color
@@ -123,7 +123,7 @@ struct BackHeader: View {
 }
 
 extension MemoryPressureLevel {
-    /// 状態色（design-system §3）。色だけで伝えない（テキスト併記が前提）
+    /// Status color (design-system §3). Never rely on color alone (text is always shown alongside)
     var color: Color {
         switch self {
         case .normal: .blue

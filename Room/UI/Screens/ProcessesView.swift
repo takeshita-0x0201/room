@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// RAM 使用量降順のプロセス一覧（要件 §13–15）。
-/// Quit は要求ベース — 5 秒後も生存していたら "Still running" を提示（§14.3）。
+/// Process list sorted by RAM usage descending (requirements §13–15).
+/// Quit is request-based — if it survives after 5 seconds, show "Still running" (§14.3).
 struct ProcessesView: View {
     @Environment(AppState.self) private var state
     @Binding var route: PopoverRoute
@@ -50,7 +50,7 @@ struct ProcessesView: View {
 
     @ViewBuilder private func row(for group: ProcessGroup) -> some View {
         let quittable = policy.canQuit(group)
-        // Finder 等「通常終了は許可・強制終了は不可」のシステムアプリ（design-system §7）
+        // System apps like Finder where "quit" is allowed but "force quit" is not (design-system §7)
         let forceQuittable = quittable
             && !ProcessProtectionPolicy.allowedSystemApps.contains(group.displayName)
         HStack(spacing: 5) {
@@ -65,7 +65,7 @@ struct ProcessesView: View {
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
             if quitting.contains(group.id) {
-                // Quit 要求中はスピナーで進行を示す（design-system §7）
+                // Show a spinner while the Quit request is pending (design-system §7)
                 ProgressView()
                     .controlSize(.small)
                     .frame(width: 110, alignment: .center)

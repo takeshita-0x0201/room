@@ -2,7 +2,7 @@ import XCTest
 @testable import Room
 
 final class ByteTextTests: XCTestCase {
-    // メニューバー短縮形（要件 §9: 100G 未満は小数1桁・.0 省略、100G 以上は整数、単位1文字）
+    // Menu bar short form (requirements §9: one decimal below 100G with .0 dropped, integers at 100G+, one-letter units)
     func testShortStorage() {
         XCTAssertEqual(ByteText.short(5_600_000_000, base: .storage1000), "5.6G")
         XCTAssertEqual(ByteText.short(171_000_000_000, base: .storage1000), "171G")
@@ -15,7 +15,7 @@ final class ByteTextTests: XCTestCase {
         XCTAssertEqual(ByteText.short(19_756_849_562, base: .memory1024), "18.4G")
     }
 
-    // Popover 長形式
+    // Popover long form
     func testLong() {
         XCTAssertEqual(ByteText.long(19_756_849_562, base: .memory1024), "18.4 GB")
         XCTAssertEqual(ByteText.long(UInt64(24) << 30, base: .memory1024), "24 GB")
@@ -45,7 +45,7 @@ final class ByteTextTests: XCTestCase {
         XCTAssertEqual(
             ByteText.pair(used: 341_000_000_000, total: 2_000_000_000_000, base: .storage1000),
             "0.3 / 2 TB")
-        // 従来の GB ボリュームは不変
+        // Legacy GB volumes are unchanged
         XCTAssertEqual(
             ByteText.pair(used: 341_000_000_000, total: 512_000_000_000, base: .storage1000),
             "341 / 512 GB")

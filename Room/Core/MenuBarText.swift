@@ -1,6 +1,6 @@
 import Foundation
 
-/// メニューバーに出す数値文字列（アイコンは View 側）。単位・% 記号は出さない（要件 §7）。
+/// Numeric string shown in the menu bar (the icon lives on the View side). No units or % sign (requirements §7).
 enum MenuBarText {
     static func memoryValue(_ snapshot: MemorySnapshot?, mode: DisplayMode) -> String {
         guard let s = snapshot else { return "–" }

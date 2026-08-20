@@ -4,7 +4,7 @@ protocol MemoryStatsProviding {
     func snapshot() -> MemorySnapshot?
 }
 
-/// mach / sysctl 呼び出しはこのファイルに閉じ込める（View やロジックから直接呼ばない）
+/// Keep all mach / sysctl calls confined to this file (never call them from Views or logic)
 final class MemoryService: MemoryStatsProviding {
     func snapshot() -> MemorySnapshot? {
         guard let raw = Self.readVMStats() else { return nil }
@@ -17,8 +17,8 @@ final class MemoryService: MemoryStatsProviding {
     }
 
     static func readVMStats() -> RawMemoryStats? {
-        // mach_host_self() は send right を返すため、毎回 deallocate しないと
-        // 長期常駐でポート参照がリークする
+        // mach_host_self() returns a send right; without deallocating each time,
+        // port references would leak during long-running residency
         let host = mach_host_self()
         defer { mach_port_deallocate(mach_task_self_, host) }
 
@@ -32,7 +32,7 @@ final class MemoryService: MemoryStatsProviding {
         }
         guard result == KERN_SUCCESS else { return nil }
         var pageSize: vm_size_t = 0
-        // pageSize 0 のまま進むと「使用量 0」の偽装正常値になるため失敗は nil
+        // Continuing with pageSize 0 would produce a fake "0 used" reading, so failure means nil
         guard host_page_size(host, &pageSize) == KERN_SUCCESS, pageSize > 0 else { return nil }
         return RawMemoryStats(
             internalPages: UInt64(stats.internal_page_count),

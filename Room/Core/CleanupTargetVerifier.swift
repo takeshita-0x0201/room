@@ -1,9 +1,9 @@
 import Foundation
 
-/// 削除直前の再検証（要件 §18.5 / D19）。スキャン結果を無検証で消さない。
+/// Re-verification right before deletion (requirements §18.5 / D19). Never delete scan results without verification.
 enum CleanupTargetVerifier {
-    /// symlink なら nil。それ以外は inode / device を記録した CleanupTarget を返す。
-    /// attributesOfItem は lstat 相当でリンクを辿らない。
+    /// Returns nil for a symlink; otherwise a CleanupTarget recording inode / device.
+    /// attributesOfItem is lstat-equivalent and does not follow links.
     static func makeTarget(_ url: URL, fileManager fm: FileManager) -> CleanupTarget? {
         guard let attrs = try? fm.attributesOfItem(atPath: url.path),
               (attrs[.type] as? FileAttributeType) != .typeSymbolicLink,
@@ -13,7 +13,7 @@ enum CleanupTargetVerifier {
         return CleanupTarget(url: url, fileNumber: fileNumber, deviceNumber: deviceNumber)
     }
 
-    /// スキャン時と同一のファイル実体か（差し替え・削除・symlink 化されていないか）
+    /// Whether it is still the same file entity as at scan time (not swapped, deleted, or symlinked)
     static func isUnchanged(_ target: CleanupTarget, fileManager fm: FileManager) -> Bool {
         guard let current = makeTarget(target.url, fileManager: fm) else { return false }
         return current == target

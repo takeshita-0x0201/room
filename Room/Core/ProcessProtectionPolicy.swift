@@ -1,6 +1,6 @@
 import Foundation
 
-/// Quit / Force Quit 可否の判定（要件 §15）。緩和禁止。
+/// Decides whether Quit / Force Quit is allowed (requirements §15). Must not be relaxed.
 struct ProcessProtectionPolicy {
     static let deniedNames: Set<String> = [
         "kernel_task", "launchd", "WindowServer", "loginwindow", "Dock",
@@ -8,7 +8,7 @@ struct ProcessProtectionPolicy {
         "coreaudiod", "mds", "mds_stores", "logd", "launchservicesd",
         "distnoted", "cfprefsd",
     ]
-    static let allowedSystemApps: Set<String> = ["Finder"]  // 終了しても OS が自動再起動する
+    static let allowedSystemApps: Set<String> = ["Finder"]  // the OS restarts it automatically even if terminated
 
     let currentUid: uid_t
     let ownPid: pid_t

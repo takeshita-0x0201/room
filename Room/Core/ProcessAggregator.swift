@@ -1,6 +1,6 @@
 import Foundation
 
-/// 生プロセス一覧を「アプリ単位」に集約する（要件 §6.3）。純粋関数。
+/// Aggregates the raw process list into "per-app" groups (requirements §6.3). Pure function.
 enum ProcessAggregator {
     static func aggregate(_ raw: [RawProcess]) -> [ProcessGroup] {
         var appBuckets: [String: [RawProcess]] = [:]
@@ -43,7 +43,7 @@ enum ProcessAggregator {
         return groups.sorted { $0.footprintBytes > $1.footprintBytes }
     }
 
-    /// 最初（最外）の ".app" までのパス。Chrome Helper のような入れ子 .app を親アプリへ束ねる。
+    /// Path up to the first (outermost) ".app". Bundles nested .apps such as Chrome Helper into the parent app.
     static func appBundlePath(of path: String) -> String? {
         let components = path.split(separator: "/")
         guard let index = components.firstIndex(where: { $0.hasSuffix(".app") }) else { return nil }

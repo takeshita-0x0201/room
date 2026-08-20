@@ -1,11 +1,11 @@
 import Foundation
 
 enum CleanupPlanner {
-    /// ~/Library/Caches 直下の汎用スキャン対象を決める（要件 §18.3 排他ルール）:
-    /// - com.apple.* は除外（明示ルールで claim されたものだけ扱う）
-    /// - reverse-DNS 名（ドット 2 個以上）以外は除外 — "Google" 等は実行中判定不能（要件 D20）
-    /// - 実行中アプリの bundle id と一致するディレクトリは除外（要件 §18.4）
-    /// - 他ルールが claim したパス（子孫 or 祖先）は除外 → 二重計上・巻き添え削除の防止
+    /// Decides the generic scan targets directly under ~/Library/Caches (requirements §18.3 exclusivity rules):
+    /// - com.apple.* is excluded (only paths claimed by an explicit rule are handled)
+    /// - anything that is not a reverse-DNS name (2+ dots) is excluded — "Google" etc. cannot be resolved as running (requirements D20)
+    /// - directories matching a running app's bundle id are excluded (requirements §18.4)
+    /// - paths claimed by other rules (descendant or ancestor) are excluded — prevents double counting and collateral deletion
     static func genericCacheChildren(allChildren: [URL],
                                      claimedRoots: [URL],
                                      runningBundleIDs: Set<String>) -> [URL] {

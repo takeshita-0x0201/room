@@ -2,11 +2,11 @@ import AppKit
 import SwiftUI
 
 enum RoomIcon {
-    /// 3 面だけのオープンな部屋（要件 §8: 面のない立体空間）。座標系は 100x100（flipped: y 下向き）。
-    /// - 奥のリム: D(16,30) — A(50,12) — B(84,30)
-    /// - 縦エッジ: D→D'(16,66), A→A'(50,48), B→B'(84,66)
-    /// - 床のダイヤ: D'(16,66) — A'(50,48) — B'(84,66) — C'(50,84) — 閉じる
-    /// 前面・上面のエッジは描かない。
+    /// An open room with only 3 faces (requirements §8: a faceless 3D space). Coordinate system is 100x100 (flipped: y points down).
+    /// - Rear rim: D(16,30) — A(50,12) — B(84,30)
+    /// - Vertical edges: D→D'(16,66), A→A'(50,48), B→B'(84,66)
+    /// - Floor diamond: D'(16,66) — A'(50,48) — B'(84,66) — C'(50,84) — close
+    /// Front and top edges are not drawn.
     static func menuBarImage(pointSize: CGFloat = 18) -> NSImage {
         let image = NSImage(size: NSSize(width: pointSize, height: pointSize),
                             flipped: true) { rect in
@@ -29,7 +29,7 @@ enum RoomIcon {
             path.stroke()
             return true
         }
-        image.isTemplate = true   // Light / Dark を OS が自動反転
+        image.isTemplate = true   // the OS flips it automatically for Light / Dark
         return image
     }
 }

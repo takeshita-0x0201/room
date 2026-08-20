@@ -12,22 +12,22 @@ struct CleanupRule: Identifiable {
     let title: String
     let summaryGroup: CleanupSummaryGroup
     let roots: [URL]
-    let minFileAge: TimeInterval?          // nil = 全件対象
-    let blockingBundleIDs: [String]        // 実行中ならこの項目をブロック（要件 §18.4）
+    let minFileAge: TimeInterval?          // nil = all items in scope
+    let blockingBundleIDs: [String]        // blocks this item while running (requirements §18.4)
     let requiresFullDiskAccess: Bool
-    let isGenericCachesScan: Bool          // ~/Library/Caches の汎用スキャン（唯一）
+    let isGenericCachesScan: Bool          // generic ~/Library/Caches scan (the only one)
 }
 
-/// スキャン時に確定した削除対象 1 ディレクトリ。inode / device を記録し、
-/// 削除直前に同一性を再検証する（要件 §18.5 / D19: TOCTOU・symlink 差し替え対策）
+/// One directory fixed as a deletion target at scan time. Records inode / device and
+/// re-verifies identity right before deletion (requirements §18.5 / D19: TOCTOU and symlink-swap protection)
 struct CleanupTarget: Equatable {
     let url: URL
     let fileNumber: Int      // inode
     let deviceNumber: Int
 }
 
-/// 削除時の許可ルート・age・ブロッカーは item ではなく CleanupService が
-/// 自身の rules から ID で再導出する（多層防御 — item 側の値は安全境界ではない）。
+/// Allowed roots, age, and blockers at deletion time are re-derived by ID from CleanupService's
+/// own rules, not from the item (defense in depth — item-side values are not a safety boundary).
 struct CleanupItem: Identifiable, Equatable {
     enum State: Equatable {
         case ready
@@ -38,14 +38,14 @@ struct CleanupItem: Identifiable, Equatable {
     let id: String
     let title: String
     let summaryGroup: CleanupSummaryGroup
-    let targets: [CleanupTarget]           // 「この中身を消す」対象ディレクトリ群
+    let targets: [CleanupTarget]           // directories whose contents are to be deleted
     let sizeBytes: UInt64
     let state: State
 }
 
 struct CleanupOutcome: Equatable {
-    let deletedBytes: UInt64       // 実際に削除したファイルサイズ合計。成果表示はこれ（要件 D22）
+    let deletedBytes: UInt64       // total size actually deleted. This drives the result display (requirements D22)
     let skippedPaths: [String]
-    let freeBefore: UInt64         // 参考値。APFS の空き容量反映は遅延するため成果表示に使わない
+    let freeBefore: UInt64         // reference only. APFS free-space updates are delayed, so not used for the result display
     let freeAfter: UInt64
 }

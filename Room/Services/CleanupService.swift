@@ -44,7 +44,7 @@ final class CleanupService: CleanupScanning, CleanupDeleting {
             if Task.isCancelled { break }
 
             if rule.requiresFullDiskAccess, let root = rule.roots.first {
-                // 読めない = FDA 未付与（要件 §5: 先回りして要求せず、行として案内する）
+                // unreadable = FDA not granted (requirements §5: don't ask preemptively, guide via a row)
                 if (try? fm.contentsOfDirectory(atPath: root.path)) == nil {
                     items.append(CleanupItem(
                         id: rule.id, title: rule.title, summaryGroup: rule.summaryGroup,
@@ -63,7 +63,7 @@ final class CleanupService: CleanupScanning, CleanupDeleting {
                     allChildren: children, claimedRoots: claimed,
                     runningBundleIDs: runningIDs)
             }
-            // symlink は makeTarget が nil を返すのでここで対象から外れる（要件 D19）
+            // symlinks are excluded here because makeTarget returns nil for them (requirements D19)
             let targets = targetURLs.compactMap {
                 CleanupTargetVerifier.makeTarget($0, fileManager: fm)
             }
@@ -94,14 +94,14 @@ final class CleanupService: CleanupScanning, CleanupDeleting {
         let now = Date()
         let fm = FileManager.default
         for item in items where item.state == .ready {
-            // 呼び出し側の item が直接持つ値（ID・targets・sizeBytes）は信用せず、
-            // ルート・age・ブロッカーはサービス自身の rules から ID で再導出する（多層防御）
+            // Don't trust the values carried directly by the caller's item (ID, targets, sizeBytes):
+            // roots, age, and blockers are re-derived by ID from the service's own rules (defense in depth)
             guard let rule = rules.first(where: { $0.id == item.id }) else {
                 skipped.append(contentsOf: item.targets.map(\.url.path))
                 continue
             }
-            // 実行中アプリの再判定は「項目ごと」に行う — 前の項目を削除している間に
-            // 対象アプリが起動され得るため、開始時スナップショットを使い回さない
+            // Running-app re-check happens per item — the target app could start while
+            // earlier items are being deleted, so don't reuse the start-of-delete snapshot
             let runningIDs = Set(runningApps().map(\.bundleID))
             guard !rule.blockingBundleIDs.contains(where: runningIDs.contains) else {
                 skipped.append(contentsOf: item.targets.map(\.url.path))
@@ -109,8 +109,8 @@ final class CleanupService: CleanupScanning, CleanupDeleting {
             }
             let resolvedRoots = rule.roots.map { $0.resolvingSymlinksInPath() }
             for target in item.targets {
-                // 中間 symlink による許可領域外への脱出を防ぐ:
-                // 字句パスの包含に加え、symlink 解決後の実体パスでも包含を要求する
+                // Prevent escaping the allowed area via an intermediate symlink:
+                // require containment for both the lexical path and the symlink-resolved real path
                 let resolvedTarget = target.url.resolvingSymlinksInPath()
                 guard !runningIDs.contains(target.url.lastPathComponent),
                       CleanupTargetVerifier.isUnder(target.url, roots: rule.roots),

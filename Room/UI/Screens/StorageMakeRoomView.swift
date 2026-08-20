@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Storage Make Room（要件 §18.6）。Make Room / Review どちらのボタンも
-/// 必ず Review（確認画面）を経由する — 確認なしの削除経路は存在しない。
+/// Storage Make Room (requirements §18.6). Both the Make Room and Review buttons
+/// always go through the Review (confirmation) screen — there is no deletion path without confirmation.
 struct StorageMakeRoomView: View {
     @Environment(AppState.self) private var state
     @Binding var route: PopoverRoute
@@ -19,7 +19,7 @@ struct StorageMakeRoomView: View {
     @State private var phase: Phase = .scanning
     @State private var enabledIDs: Set<String> = []
     @State private var scanTask: Task<Void, Never>?
-    /// 画面再入時の並行 Clean を防ぐ（プロセス内で唯一の Clean 実行を保証）
+    /// Prevents concurrent Cleans on screen re-entry (guarantees the only Clean run in the process)
     @MainActor private static var isCleaning = false
 
     var body: some View {
@@ -65,7 +65,7 @@ struct StorageMakeRoomView: View {
         }
 
         SectionHeader(title: "Cleanable")
-        // Total は「今すぐ消せる量」だけを合算（要件 D22: blocked / FDA を混ぜて水増ししない）
+        // Total sums only what can be deleted right now (requirements D22: don't pad it with blocked / FDA items)
         let ready = items.filter { $0.state == .ready }
         let totals = CleanupSummary.totals(ready)
         ForEach(CleanupSummaryGroup.allCases, id: \.self) { group in
@@ -93,7 +93,7 @@ struct StorageMakeRoomView: View {
 
         HStack {
             Spacer()
-            // 主要アクションはブルーの Review 単一（design-system §8）。削除は必ず Review 経由
+            // The primary action is a single blue Review button (design-system §8). Deletion always goes through Review
             Button("Review") { beginReview(items) }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
@@ -126,7 +126,7 @@ struct StorageMakeRoomView: View {
                 }
                 .accessibilityElement(children: .combine)
             case .needsFullDiskAccess:
-                EmptyView()   // resultsView 側で案内済み
+                EmptyView()   // already guided on the resultsView side
             }
         }
 
@@ -146,8 +146,8 @@ struct StorageMakeRoomView: View {
     }
 
     @ViewBuilder private func doneView(_ outcome: CleanupOutcome) -> some View {
-        // 事実ベースの実績表示（削除したファイルサイズ合計）。
-        // APFS の空き容量反映は遅延するため freeAfter 差分を成果として出さない（要件 D22）
+        // Fact-based result display (total size of deleted files).
+        // APFS free-space updates are delayed, so the freeAfter delta is not shown as the result (requirements D22)
         StatRow(label: "Cleaned",
                 value: ByteText.long(outcome.deletedBytes, base: .storage1000))
         if let s = state.storage {

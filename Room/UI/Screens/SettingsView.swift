@@ -20,7 +20,7 @@ struct SettingsView: View {
                                 try SMAppService.mainApp.unregister()
                             }
                         } catch {
-                            // 失敗しても UI を実状態に合わせる（下の再読込が正）
+                            // On failure, still align the UI with the actual state (the reload below is authoritative)
                         }
                         launchAtLogin = SMAppService.mainApp.status == .enabled
                     }
@@ -68,7 +68,7 @@ struct SettingsView: View {
         .accessibilityLabel("\(mode.title)\(isSelected ? ", selected" : "")")
     }
 
-    /// 各モードのプレビューチップ（design-system §9。固定サンプル値）
+    /// Preview chip for each mode (design-system §9; fixed sample values)
     private func previewChip(for mode: DisplayMode) -> some View {
         let sample = sampleValues(for: mode)
         return HStack(spacing: 3) {

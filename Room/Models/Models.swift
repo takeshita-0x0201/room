@@ -4,7 +4,7 @@ enum MemoryPressureLevel: String, Equatable, CaseIterable {
     case normal = "Normal"
     case warning = "Warning"
     case critical = "Critical"
-    case unavailable = "Unavailable"   // 取得失敗・未知値。Normal と区別する（要件 D21）
+    case unavailable = "Unavailable"   // fetch failure or unknown value. Kept distinct from Normal (requirements D21)
 }
 
 struct MemorySnapshot: Equatable {

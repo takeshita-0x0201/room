@@ -28,7 +28,7 @@ struct MenuBarLabel: View {
         return parts.joined(separator: ", ")
     }
 
-    /// 表示モードの意味を音声でも区別できるようにする（"5.6G" だけでは Free か Used か不明）
+    /// Distinguish the display mode in speech too ("5.6G" alone would not say Free vs. Used)
     private func spoken(_ label: String, value: String, mode: DisplayMode) -> String {
         switch mode {
         case .percentage: "\(label) \(value) percent used"

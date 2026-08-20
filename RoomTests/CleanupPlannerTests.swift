@@ -13,7 +13,7 @@ final class CleanupPlannerTests: XCTestCase {
     }
 
     func testExcludesNonReverseDNSNames() {
-        // "Google" "JetBrains" 等は bundle ID ではなく実行中判定ができない → 対象外（要件 D20）
+        // "Google" "JetBrains" etc. are not bundle IDs and can't be resolved as running → excluded (requirements D20)
         let result = CleanupPlanner.genericCacheChildren(
             allChildren: [child("Google"), child("JetBrains"), child("Yarn"),
                           child("com.example.tool")],
@@ -29,7 +29,7 @@ final class CleanupPlannerTests: XCTestCase {
     }
 
     func testExcludesAncestorOfClaimedRoot() {
-        // 子孫が claim されている親ディレクトリを丸ごと消してはいけない
+        // Must not delete a parent directory whose descendant is claimed
         let result = CleanupPlanner.genericCacheChildren(
             allChildren: [child("com.example.vendor")],
             claimedRoots: [child("com.example.vendor").appendingPathComponent("Sub")],
