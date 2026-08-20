@@ -10,20 +10,10 @@ struct MenuBarLabel: View {
 
     var body: some View {
         let mode = DisplayMode(rawValue: displayModeRaw) ?? .percentage
-        HStack(spacing: 4) {
-            Image(nsImage: RoomIcon.menuBarImage())
-            if showMemory {
-                Image(systemName: "memorychip")
-                Text(MenuBarText.memoryValue(state.memory, mode: mode))
-                    .monospacedDigit()
-            }
-            if showStorage {
-                Image(systemName: "internaldrive")
-                Text(MenuBarText.storageValue(state.storage, mode: mode))
-                    .monospacedDigit()
-            }
-        }
-        .accessibilityLabel(accessibilityText(mode: mode))
+        Image(nsImage: MenuBarLabelRenderer.image(
+            memory: showMemory ? MenuBarText.memoryValue(state.memory, mode: mode) : nil,
+            storage: showStorage ? MenuBarText.storageValue(state.storage, mode: mode) : nil))
+            .accessibilityLabel(accessibilityText(mode: mode))
     }
 
     private func accessibilityText(mode: DisplayMode) -> String {
