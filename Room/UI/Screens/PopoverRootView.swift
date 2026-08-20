@@ -1,13 +1,29 @@
 import SwiftUI
 
+enum PopoverRoute {
+    case home, processes, makeRoom, memoryMakeRoom, storageMakeRoom
+}
+
 struct PopoverRootView: View {
     @Environment(AppState.self) private var state
+    @State private var route: PopoverRoute = .home
 
     var body: some View {
-        Text("Room")
-            .padding()
-            .frame(width: 300)
-            .onAppear { state.isPopoverVisible = true; state.refreshNow() }
-            .onDisappear { state.isPopoverVisible = false }
+        Group {
+            switch route {
+            case .home: HomeView(route: $route)
+            case .processes: ProcessesView(route: $route)
+            case .makeRoom: MakeRoomHubView(route: $route)
+            case .memoryMakeRoom: MemoryMakeRoomView(route: $route)
+            case .storageMakeRoom: StorageMakeRoomView(route: $route)
+            }
+        }
+        .frame(width: 300)
+        .onAppear {
+            route = .home
+            state.isPopoverVisible = true
+            state.refreshNow()
+        }
+        .onDisappear { state.isPopoverVisible = false }
     }
 }
