@@ -11,7 +11,7 @@ struct MenuBarLabel: View {
     var body: some View {
         let mode = DisplayMode(rawValue: displayModeRaw) ?? .percentage
         HStack(spacing: 4) {
-            Image(systemName: "cube.transparent")   // Task 18 で RoomIcon に差し替え
+            Image(nsImage: RoomIcon.menuBarImage())
             if showMemory {
                 Image(systemName: "memorychip")
                 Text(MenuBarText.memoryValue(state.memory, mode: mode))

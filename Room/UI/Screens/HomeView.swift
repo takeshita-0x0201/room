@@ -8,7 +8,7 @@ struct HomeView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 6) {
-                Image(systemName: "cube.transparent")
+                Image(nsImage: RoomIcon.menuBarImage())
                 Text("Room").font(.headline)
             }
 
