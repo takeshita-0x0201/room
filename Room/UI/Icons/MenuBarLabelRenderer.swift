@@ -5,15 +5,15 @@ import AppKit
 /// Room アイコン + Memory/Storage グリフ + 数値をここで 1 つの NSImage にまとめる。
 enum MenuBarLabelRenderer {
     static func image(memory: String?, storage: String?) -> NSImage {
-        let height: CGFloat = 18
+        let height: CGFloat = 20
         let spacing: CGFloat = 6
         let iconTextGap: CGFloat = 2
-        let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 14, weight: .medium)
         let textAttributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: NSColor.black,   // template 画像なので実際の色は OS が決める
         ]
-        let symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 11, weight: .medium)
+        let symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
 
         func symbol(_ name: String) -> NSImage? {
             NSImage(systemSymbolName: name, accessibilityDescription: nil)?
@@ -31,7 +31,7 @@ enum MenuBarLabelRenderer {
         }
         // 両方 OFF のときはラベルが空になりクリック不能になるため、Room アイコンのみ表示
         if segments.isEmpty {
-            segments = [(RoomIcon.menuBarImage(pointSize: 16), nil)]
+            segments = [(RoomIcon.menuBarImage(pointSize: 18), nil)]
         }
 
         var width: CGFloat = 0
