@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// メニューバー表示（要件 §9）: [Room Icon] [Memory Icon]72 [Storage Icon]68
-/// テキストは数値のみ。単位・% は出さない。
+/// Menu bar label (requirements §9): [memory glyph]72 [storage glyph]68 — values only,
+/// no units or captions. Rendered as ONE composed template image because MenuBarExtra
+/// degrades multi-view labels. Falls back to the Room icon alone when both values are hidden.
 struct MenuBarLabel: View {
     @Environment(AppState.self) private var state
     @AppStorage(SettingsKey.displayMode) private var displayModeRaw = DisplayMode.percentage.rawValue

@@ -10,15 +10,16 @@ Room sits in your menu bar and tells you, at a glance, how your RAM and storage 
 
 ## What it shows
 
-The menu bar shows the Room icon plus one number for each metric:
+The menu bar shows one number for each metric:
 
 ```
-◇ ▦72 ▱68
+▦72 ▱68
 ```
 
-- `◇` — Room. Click to open the popover.
 - `▦72` — Memory usage (72%).
 - `▱68` — Storage usage (68%).
+
+When both **Show Memory** and **Show Storage** are turned off, the menu bar shows only the Room icon so the item stays clickable.
 
 The popover shows:
 
@@ -30,9 +31,9 @@ Three display modes, switchable instantly from Settings:
 
 | Mode | Example |
 |------|---------|
-| Percentage (default) | `◇ ▦72 ▱68` |
-| Free | `◇ ▦5.6G ▱171G` |
-| Used | `◇ ▦18.4G ▱341G` |
+| Percentage (default) | `▦72 ▱68` |
+| Free | `▦5.6G ▱171G` |
+| Used | `▦18.4G ▱341G` |
 
 ## What Make Room does
 
