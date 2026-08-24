@@ -22,7 +22,7 @@ jobs:
     runs-on: macos-15
     steps:
       - name: Check out Room
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -94,7 +94,7 @@ jobs:
           fi
 
       - name: Check out Homebrew tap
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: takeshita-0x0201/homebrew-tap
           path: homebrew-tap
