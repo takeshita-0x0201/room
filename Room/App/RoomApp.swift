@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 @main
@@ -20,7 +21,7 @@ struct RoomApp: App {
         MenuBarExtra {
             PopoverRootView()
                 .environment(appState)
-                .preferredColorScheme(appearanceMode.colorScheme)
+                .roomAppearance(appearanceMode)
         } label: {
             MenuBarLabel()
                 .environment(appState)
@@ -30,7 +31,7 @@ struct RoomApp: App {
         Settings {
             SettingsView()
                 .environment(appState)
-                .preferredColorScheme(appearanceMode.colorScheme)
+                .roomAppearance(appearanceMode)
         }
     }
 
@@ -47,12 +48,44 @@ enum SettingsKey {
     static let refreshInterval = "refreshInterval"
 }
 
-private extension AppearanceMode {
+extension AppearanceMode {
     var colorScheme: ColorScheme? {
         switch self {
         case .system: nil
         case .light: .light
         case .dark: .dark
         }
+    }
+
+    var applicationAppearance: NSAppearance? {
+        switch self {
+        case .system: nil
+        case .light: NSAppearance(named: .aqua)
+        case .dark: NSAppearance(named: .darkAqua)
+        }
+    }
+
+    @MainActor
+    func applyToApplication() {
+        NSApp.appearance = applicationAppearance
+    }
+}
+
+private struct RoomAppearanceModifier: ViewModifier {
+    let mode: AppearanceMode
+
+    func body(content: Content) -> some View {
+        content
+            .preferredColorScheme(mode.colorScheme)
+            .onAppear { mode.applyToApplication() }
+            .onChange(of: mode) { _, newMode in
+                newMode.applyToApplication()
+            }
+    }
+}
+
+private extension View {
+    func roomAppearance(_ mode: AppearanceMode) -> some View {
+        modifier(RoomAppearanceModifier(mode: mode))
     }
 }

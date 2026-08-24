@@ -76,6 +76,10 @@ struct SettingsView: View {
         .background(RoomPalette.canvas)
         .frame(width: 400)
         .fixedSize(horizontal: false, vertical: true)
+        .onChange(of: appearanceRaw) { _, rawValue in
+            let mode = AppearanceMode(rawValue: rawValue) ?? .system
+            mode.applyToApplication()
+        }
     }
 
     private func displayModeRow(_ mode: DisplayMode) -> some View {

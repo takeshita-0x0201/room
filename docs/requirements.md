@@ -423,7 +423,7 @@ MENU BAR
 ```
 
 - Appearance / Display / Show settings are reflected in the app and menu bar immediately
-- System appearance follows the current macOS appearance; Light and Dark override it for Room only
+- System appearance follows the current macOS appearance; Light and Dark override the appearance of every Room window and popover
 - Settings are stored in `UserDefaults` (`@AppStorage`)
 
 ### Refresh Policy

@@ -31,4 +31,10 @@ final class ModelsTests: XCTestCase {
     func testAppearanceModeTitles() {
         XCTAssertEqual(AppearanceMode.allCases.map(\.title), ["System", "Light", "Dark"])
     }
+
+    func testAppearanceModeApplicationMappings() {
+        XCTAssertNil(AppearanceMode.system.applicationAppearance)
+        XCTAssertEqual(AppearanceMode.light.applicationAppearance?.name, .aqua)
+        XCTAssertEqual(AppearanceMode.dark.applicationAppearance?.name, .darkAqua)
+    }
 }
