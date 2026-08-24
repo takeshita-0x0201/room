@@ -19,6 +19,7 @@ struct PopoverRootView: View {
             }
         }
         .frame(width: 320)
+        .background(RoomPalette.canvas)
         .onAppear {
             route = .home
             state.isPopoverVisible = true

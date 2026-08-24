@@ -17,9 +17,12 @@ struct ProcessesView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             BackHeader(title: "Processes", route: $route, back: .home)
+            Text("Memory footprint by app")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 2) {
+                LazyVStack(alignment: .leading, spacing: 5) {
                     ForEach(state.processes.prefix(30)) { group in
                         row(for: group)
                     }
@@ -28,6 +31,7 @@ struct ProcessesView: View {
             .frame(maxHeight: 320)
         }
         .padding(13)
+        .background(RoomPalette.canvas)
         .confirmationDialog(
             "Force Quit \(confirmingForceQuit?.displayName ?? "")?",
             isPresented: .init(get: { confirmingForceQuit != nil },
@@ -54,35 +58,41 @@ struct ProcessesView: View {
         let forceQuittable = quittable
             && !ProcessProtectionPolicy.allowedSystemApps.contains(group.displayName)
         HStack(spacing: 5) {
-            VStack(alignment: .leading, spacing: 1) {
-                Text(group.displayName).lineLimit(1)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(group.displayName)
+                    .fontWeight(.medium)
+                    .lineLimit(1)
                 if stillRunning.contains(group.id) {
-                    Text("Still running").font(.caption2).foregroundStyle(.secondary)
+                    Text("Still running")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
-            Spacer()
+            Spacer(minLength: 3)
             Text(ByteText.long(group.footprintBytes, base: .memory1024))
+                .font(.caption)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
             if quitting.contains(group.id) {
                 // Show a spinner while the Quit request is pending (design-system §7)
                 ProgressView()
                     .controlSize(.small)
-                    .frame(width: 110, alignment: .center)
+                    .frame(width: 94, alignment: .center)
                     .accessibilityLabel("Quitting \(group.displayName)")
             } else {
                 Button("Quit") { quit(group) }
                     .buttonStyle(.bordered)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                     .disabled(!quittable)
                 Button("Force Quit") { confirmingForceQuit = group }
                     .buttonStyle(.bordered)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                     .disabled(!forceQuittable)
             }
         }
         .font(.body)
-        .padding(.vertical, 2)
+        .padding(10)
+        .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 10))
     }
 
     private func quit(_ group: ProcessGroup) {

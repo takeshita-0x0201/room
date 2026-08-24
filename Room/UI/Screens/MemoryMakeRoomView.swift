@@ -18,26 +18,37 @@ struct MemoryMakeRoomView: View {
             BackHeader(title: "Make Room — Memory", route: $route, back: .makeRoom)
 
             if let memory = state.memory {
-                PressureRow(pressure: memory.pressure)
-                StatRow(label: "Swap",
-                        value: ByteText.long(memory.swapUsedBytes, base: .memory1024))
+                VStack(alignment: .leading, spacing: 8) {
+                    SectionHeader(title: "Memory Pressure",
+                                  systemImage: "memorychip",
+                                  accent: RoomPalette.memory)
+                    PressureRow(pressure: memory.pressure)
+                    StatRow(label: "Swap",
+                            value: ByteText.long(memory.swapUsedBytes, base: .memory1024))
+                }
+                .padding(13)
+                .background(RoomPalette.memory.opacity(0.07),
+                            in: RoundedRectangle(cornerRadius: 13))
 
                 switch memory.pressure {
                 case .normal:
-                    Text("No action needed")
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 4)
+                    RoomEmptyState(systemImage: "checkmark.circle",
+                                   title: "No action needed",
+                                   detail: "Your Mac has enough breathing room.",
+                                   tint: RoomPalette.memory)
                 case .unavailable:
                     // Don't let an unavailable reading read as "no problem" (requirements D21)
-                    Text("Pressure unavailable")
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 4)
+                    RoomEmptyState(systemImage: "questionmark.circle",
+                                   title: "Pressure unavailable",
+                                   detail: "Room couldn't read the current Memory Pressure.",
+                                   tint: .secondary)
                 case .warning, .critical:
                     selectionList
                 }
             }
         }
         .padding(13)
+        .background(RoomPalette.canvas)
     }
 
     private var candidates: [ProcessGroup] {
@@ -72,6 +83,8 @@ struct MemoryMakeRoomView: View {
                 }
             }
             .toggleStyle(.checkbox)
+            .padding(8)
+            .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 8))
         }
 
         // Never present as a guaranteed recovery (requirements §17.4) — keep the "Potential" wording

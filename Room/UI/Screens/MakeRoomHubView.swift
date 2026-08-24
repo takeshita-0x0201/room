@@ -7,27 +7,61 @@ struct MakeRoomHubView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
             BackHeader(title: "Make Room", route: $route, back: .home)
-
-            NavRow(icon: Image(systemName: "memorychip"), title: "Memory", showsChevron: true) {
-                route = .memoryMakeRoom
-            }
-            if let m = state.memory {
-                Text(hubCaption(for: m.pressure))
-                    .font(.caption)
-                    .foregroundStyle(m.pressure == .warning || m.pressure == .critical
-                                     ? m.pressure.color : Color.secondary)
-            }
-
-            Divider()
-
-            NavRow(icon: Image(systemName: "internaldrive"), title: "Storage", showsChevron: true) {
-                route = .storageMakeRoom
-            }
-            Text(storageCaption)
+            Text("Choose where you need breathing room.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            destination(title: "Memory",
+                        caption: memoryCaption,
+                        systemImage: "memorychip",
+                        tint: RoomPalette.memory) {
+                route = .memoryMakeRoom
+            }
+            destination(title: "Storage",
+                        caption: storageCaption,
+                        systemImage: "internaldrive",
+                        tint: RoomPalette.storage) {
+                route = .storageMakeRoom
+            }
         }
         .padding(13)
+        .background(RoomPalette.canvas)
+    }
+
+    private func destination(title: String,
+                             caption: String,
+                             systemImage: String,
+                             tint: Color,
+                             action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 13) {
+                Image(systemName: systemImage)
+                    .font(.title3)
+                    .foregroundStyle(tint)
+                    .frame(width: 38, height: 38)
+                    .background(tint.opacity(0.11), in: RoundedRectangle(cornerRadius: 10))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.body.weight(.medium))
+                    Text(caption)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(13)
+            .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 13))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var memoryCaption: String {
+        guard let memory = state.memory else { return "Checking Memory Pressure…" }
+        return hubCaption(for: memory.pressure)
     }
 
     private func hubCaption(for pressure: MemoryPressureLevel) -> String {
@@ -42,6 +76,6 @@ struct MakeRoomHubView: View {
         if let bytes = state.lastCleanupReadyBytes, bytes > 0 {
             return "\(ByteText.long(bytes, base: .storage1000)) cleanable"
         }
-        return "Scan for cleanable files"
+        return "Scan regenerable files"
     }
 }

@@ -9,44 +9,64 @@ struct SettingsView: View {
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
-        Form {
-            Section("General") {
-                Toggle("Launch at Login", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { _, enabled in
-                        do {
-                            if enabled {
-                                try SMAppService.mainApp.register()
-                            } else {
-                                try SMAppService.mainApp.unregister()
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                Image(nsImage: RoomIcon.menuBarImage(pointSize: 28))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Room")
+                        .font(.title2.weight(.semibold))
+                    Text("See what's full. Make room.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 18)
+            .padding(.bottom, 13)
+
+            RoomDivider()
+
+            Form {
+                Section("General") {
+                    Toggle("Launch at Login", isOn: $launchAtLogin)
+                        .onChange(of: launchAtLogin) { _, enabled in
+                            do {
+                                if enabled {
+                                    try SMAppService.mainApp.register()
+                                } else {
+                                    try SMAppService.mainApp.unregister()
+                                }
+                            } catch {
+                                // On failure, still align the UI with the actual state (the reload below is authoritative)
                             }
-                        } catch {
-                            // On failure, still align the UI with the actual state (the reload below is authoritative)
+                            launchAtLogin = SMAppService.mainApp.status == .enabled
                         }
-                        launchAtLogin = SMAppService.mainApp.status == .enabled
-                    }
-            }
-
-            Section("Menu Bar") {
-                Toggle("Show Memory", isOn: $showMemory)
-                Toggle("Show Storage", isOn: $showStorage)
-
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("Display")
-                    ForEach(DisplayMode.allCases, id: \.rawValue) { mode in
-                        displayModeRow(mode)
-                    }
                 }
 
-                Picker("Refresh Interval", selection: $refreshInterval) {
-                    Text("5 sec").tag(5)
-                    Text("10 sec").tag(10)
-                    Text("30 sec").tag(30)
+                Section("Menu Bar") {
+                    Toggle("Show Memory", isOn: $showMemory)
+                    Toggle("Show Storage", isOn: $showStorage)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Display")
+                        ForEach(DisplayMode.allCases, id: \.rawValue) { mode in
+                            displayModeRow(mode)
+                        }
+                    }
+
+                    Picker("Refresh Interval", selection: $refreshInterval) {
+                        Text("5 sec").tag(5)
+                        Text("10 sec").tag(10)
+                        Text("30 sec").tag(30)
+                    }
+                    .pickerStyle(.menu)
                 }
-                .pickerStyle(.menu)
             }
+            .formStyle(.grouped)
         }
-        .formStyle(.grouped)
-        .frame(width: 380)
+        .background(RoomPalette.canvas)
+        .frame(width: 400)
         .fixedSize(horizontal: false, vertical: true)
     }
 
@@ -63,6 +83,7 @@ struct SettingsView: View {
                 previewChip(for: mode)
             }
             .contentShape(Rectangle())
+            .padding(.vertical, 3)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(mode.title)\(isSelected ? ", selected" : "")")
@@ -73,8 +94,10 @@ struct SettingsView: View {
         let sample = sampleValues(for: mode)
         return HStack(spacing: 3) {
             Image(systemName: "memorychip")
+                .foregroundStyle(RoomPalette.memory)
             Text(sample.memory)
             Image(systemName: "internaldrive")
+                .foregroundStyle(RoomPalette.storage)
             Text(sample.storage)
         }
         .font(.caption)

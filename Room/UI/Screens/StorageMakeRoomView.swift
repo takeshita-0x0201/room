@@ -32,6 +32,7 @@ struct StorageMakeRoomView: View {
             content
         }
         .padding(13)
+        .background(RoomPalette.canvas)
         .onAppear { startScan() }
         .onDisappear { scanTask?.cancel() }
     }
@@ -39,19 +40,27 @@ struct StorageMakeRoomView: View {
     @ViewBuilder private var content: some View {
         switch phase {
         case .scanning:
-            HStack(spacing: 8) {
+            VStack(spacing: 10) {
                 ProgressView().controlSize(.small)
-                Text("Scanning…").foregroundStyle(.secondary)
+                Text("Scanning regenerable files…")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 34)
+            .background(RoomPalette.storage.opacity(0.07),
+                        in: RoundedRectangle(cornerRadius: 13))
         case .results(let items):
             resultsView(items)
         case .reviewing(let items):
             reviewView(items)
         case .cleaning:
-            HStack(spacing: 8) {
+            VStack(spacing: 10) {
                 ProgressView().controlSize(.small)
-                Text("Cleaning…").foregroundStyle(.secondary)
+                Text("Making room…").foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 34)
         case .done(let outcome):
             doneView(outcome)
         }
@@ -59,9 +68,20 @@ struct StorageMakeRoomView: View {
 
     @ViewBuilder private func resultsView(_ items: [CleanupItem]) -> some View {
         if let s = state.storage {
-            Text(ByteText.pair(used: s.usedBytes, total: s.totalBytes, base: .storage1000))
-                .font(.body).monospacedDigit()
-            StatRow(label: "Free", value: ByteText.long(s.freeBytes, base: .storage1000))
+            VStack(alignment: .leading, spacing: 8) {
+                SectionHeader(title: "Storage", systemImage: "internaldrive",
+                              trailing: ByteText.percent(s.usedFraction) + "%",
+                              accent: RoomPalette.storage)
+                UsageBar(fraction: s.usedFraction, tint: RoomPalette.storage)
+                StatRow(label: "Used",
+                        value: ByteText.pair(used: s.usedBytes,
+                                             total: s.totalBytes,
+                                             base: .storage1000))
+                StatRow(label: "Free", value: ByteText.long(s.freeBytes, base: .storage1000))
+            }
+            .padding(13)
+            .background(RoomPalette.storage.opacity(0.07),
+                        in: RoundedRectangle(cornerRadius: 13))
         }
 
         SectionHeader(title: "Cleanable")
@@ -76,6 +96,9 @@ struct StorageMakeRoomView: View {
         }
         StatRow(label: "Total",
                 value: ByteText.long(CleanupSummary.grandTotal(ready), base: .storage1000))
+            .fontWeight(.medium)
+            .padding(10)
+            .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 9))
 
         let blockedBytes = CleanupSummary.grandTotal(items.filter {
             if case .blocked = $0.state { return true }
@@ -92,10 +115,10 @@ struct StorageMakeRoomView: View {
         }
 
         HStack {
-            Spacer()
             // The primary action is a single blue Review button (design-system §8). Deletion always goes through Review
             Button("Review") { beginReview(items) }
                 .buttonStyle(.borderedProminent)
+                .frame(maxWidth: .infinity)
                 .keyboardShortcut(.defaultAction)
         }
         .disabled(!items.contains { $0.state == .ready })
@@ -118,6 +141,8 @@ struct StorageMakeRoomView: View {
                     }
                 }
                 .toggleStyle(.checkbox)
+                .padding(8)
+                .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 8))
             case .blocked(let app):
                 HStack {
                     Text(item.title).foregroundStyle(.secondary)
@@ -134,6 +159,9 @@ struct StorageMakeRoomView: View {
             .filter { $0.state == .ready && enabledIDs.contains($0.id) }
             .reduce(UInt64(0)) { $0 + $1.sizeBytes }
         StatRow(label: "Total", value: ByteText.long(selectedTotal, base: .storage1000))
+            .fontWeight(.medium)
+            .padding(10)
+            .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 9))
 
         HStack {
             Spacer()

@@ -6,25 +6,38 @@ struct HomeView: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 21) {
+        VStack(alignment: .leading, spacing: 0) {
             header
+                .padding(13)
+            RoomDivider()
             memorySection
+                .padding(13)
+            RoomDivider()
             storageSection
+                .padding(13)
+            RoomDivider()
             topProcesses
+                .padding(13)
+            RoomDivider()
             footer
+                .padding(8)
         }
-        .padding(13)
+        .background(RoomPalette.canvas)
     }
 
     private var header: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 8) {
             Image(nsImage: RoomIcon.menuBarImage(pointSize: 22))
                 .accessibilityHidden(true)
-            Text("Room").font(.title3.weight(.semibold))
+            Text("Room")
+                .font(.title3.weight(.semibold))
             Spacer()
             Button { openSettingsWindow() } label: {
                 Image(systemName: "gearshape")
+                    .font(.body)
                     .foregroundStyle(.secondary)
+                    .frame(width: 28, height: 28)
+                    .background(RoomPalette.subtleSurface, in: Circle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Settings")
@@ -32,18 +45,35 @@ struct HomeView: View {
     }
 
     private var footer: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Divider()
-            NavRow(icon: Image(nsImage: RoomIcon.menuBarImage()), title: "Make Room") {
+        HStack(spacing: 5) {
+            footerButton(title: "Make Room",
+                         icon: Image(nsImage: RoomIcon.menuBarImage(pointSize: 15))) {
                 route = .makeRoom
             }
-            NavRow(icon: Image(systemName: "gauge"), title: "Processes", showsChevron: true) {
+            footerButton(title: "Processes", icon: Image(systemName: "gauge")) {
                 route = .processes
             }
-            NavRow(icon: Image(systemName: "gearshape"), title: "Settings") {
+            footerButton(title: "Settings", icon: Image(systemName: "gearshape")) {
                 openSettingsWindow()
             }
         }
+    }
+
+    private func footerButton(title: String, icon: Image, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                icon
+                    .frame(height: 16)
+                Text(title)
+                    .font(.caption2)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+            .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 9))
+        }
+        .buttonStyle(.plain)
     }
 
     private func openSettingsWindow() {
@@ -52,49 +82,88 @@ struct HomeView: View {
     }
 
     @ViewBuilder private var memorySection: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 8) {
             SectionHeader(title: "Memory", systemImage: "memorychip",
-                          trailing: state.memory.map { ByteText.percent($0.usedFraction) + "%" })
-            if let m = state.memory {
-                UsageBar(fraction: m.usedFraction, tint: .blue)
-                Text(ByteText.pair(used: m.usedBytes, total: m.totalBytes, base: .memory1024))
-                    .font(.body).monospacedDigit()
-                StatRow(label: "Free", value: ByteText.long(m.freeBytes, base: .memory1024))
-                PressureRow(pressure: m.pressure)
-                StatRow(label: "Swap", value: ByteText.long(m.swapUsedBytes, base: .memory1024))
+                          trailing: state.memory.map { ByteText.percent($0.usedFraction) + "%" },
+                          accent: RoomPalette.memory)
+            if let memory = state.memory {
+                UsageBar(fraction: memory.usedFraction, tint: RoomPalette.memory)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(ByteText.pair(used: memory.usedBytes,
+                                       total: memory.totalBytes,
+                                       base: .memory1024))
+                        .font(.body.weight(.medium))
+                        .monospacedDigit()
+                    Spacer()
+                    MetricCaption(label: "Free",
+                                  value: ByteText.long(memory.freeBytes, base: .memory1024))
+                }
+                HStack(spacing: 21) {
+                    MetricCaption(label: "Pressure",
+                                  value: memory.pressure.rawValue,
+                                  statusColor: memory.pressure.color)
+                    MetricCaption(label: "Swap",
+                                  value: ByteText.long(memory.swapUsedBytes, base: .memory1024))
+                }
+            } else {
+                loadingRow
             }
         }
         .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder private var storageSection: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 8) {
             SectionHeader(title: "Storage", systemImage: "internaldrive",
-                          trailing: state.storage.map { ByteText.percent($0.usedFraction) + "%" })
-            if let s = state.storage {
-                UsageBar(fraction: s.usedFraction, tint: .green)
-                Text(ByteText.pair(used: s.usedBytes, total: s.totalBytes, base: .storage1000))
-                    .font(.body).monospacedDigit()
-                StatRow(label: "Free", value: ByteText.long(s.freeBytes, base: .storage1000))
+                          trailing: state.storage.map { ByteText.percent($0.usedFraction) + "%" },
+                          accent: RoomPalette.storage)
+            if let storage = state.storage {
+                UsageBar(fraction: storage.usedFraction, tint: RoomPalette.storage)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(ByteText.pair(used: storage.usedBytes,
+                                       total: storage.totalBytes,
+                                       base: .storage1000))
+                        .font(.body.weight(.medium))
+                        .monospacedDigit()
+                    Spacer()
+                    MetricCaption(label: "Free",
+                                  value: ByteText.long(storage.freeBytes, base: .storage1000))
+                }
+            } else {
+                loadingRow
             }
         }
         .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder private var topProcesses: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 8) {
             SectionHeader(title: "Top Processes", systemImage: "chart.bar")
-            ForEach(state.processes.prefix(3)) { group in
-                HStack {
-                    Text(group.displayName).lineLimit(1)
-                    Spacer()
-                    Text(ByteText.long(group.footprintBytes, base: .memory1024))
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
+            if state.processes.isEmpty {
+                loadingRow
+            } else {
+                ForEach(state.processes.prefix(3)) { group in
+                    HStack {
+                        Text(group.displayName).lineLimit(1)
+                        Spacer()
+                        Text(ByteText.long(group.footprintBytes, base: .memory1024))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(.body)
+                    .accessibilityElement(children: .combine)
                 }
-                .font(.body)
-                .accessibilityElement(children: .combine)
             }
         }
+    }
+
+    private var loadingRow: some View {
+        HStack(spacing: 8) {
+            ProgressView().controlSize(.small)
+            Text("Loading…")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(minHeight: 18)
     }
 }
