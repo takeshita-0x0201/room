@@ -2,11 +2,18 @@ import AppKit
 import SwiftUI
 
 enum RoomPalette {
-    static let memory = Color.blue
-    static let storage = Color.green
+    // System colors softened with gray so state remains familiar without looking overly saturated.
+    static let memory = muted(.systemBlue, amount: 0.22)
+    static let storage = muted(.systemGreen, amount: 0.22)
+    static let warning = muted(.systemYellow, amount: 0.18)
+    static let critical = muted(.systemRed, amount: 0.18)
     static let canvas = Color(nsColor: .windowBackgroundColor)
     static let subtleSurface = Color.primary.opacity(0.045)
     static let hairline = Color.primary.opacity(0.09)
+
+    private static func muted(_ color: NSColor, amount: CGFloat) -> Color {
+        Color(nsColor: color.blended(withFraction: amount, of: .systemGray) ?? color)
+    }
 }
 
 struct SectionHeader: View {
@@ -205,9 +212,9 @@ extension MemoryPressureLevel {
     /// Status color (design-system §3). Never rely on color alone (text is always shown alongside)
     var color: Color {
         switch self {
-        case .normal: .blue
-        case .warning: .yellow
-        case .critical: .red
+        case .normal: RoomPalette.memory
+        case .warning: RoomPalette.warning
+        case .critical: RoomPalette.critical
         case .unavailable: .secondary
         }
     }
