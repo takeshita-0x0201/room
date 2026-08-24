@@ -24,13 +24,14 @@ Policy: match line weight, corner radius, and abstraction to the brand icon so t
 
 | Use | Color |
 |---|---|
-| Accent / primary action (Review button, selection state) | System blue (accentColor) |
-| Memory usage bar | Blue |
-| Storage usage bar | Green |
-| Pressure: Normal | **Blue** (dot + text) |
-| Pressure: Warning | Yellow |
-| Pressure: Critical | Red |
-| Text & background | System standard (primary / secondary, auto Dark / Light) |
+| Accent / primary action (Review button, selection state) | System accent color |
+| Memory usage bar | Muted slate blue (`#5D7F9F` light) |
+| Storage usage bar | Muted eucalyptus (`#5C8974` light) |
+| Pressure: Normal | **Muted slate blue** dot |
+| Pressure: Warning | Muted ochre |
+| Pressure: Critical | Muted red |
+| Canvas / surfaces | Warm off-white inspired by the landing page; adaptive charcoal in Dark Mode |
+| Text | System primary / secondary, auto Light / Dark |
 
 - State is **always paired with text** (never communicate by color alone — accessibility principle preserved)
 - **Pressure is shown as a "colored dot (●) + normal-color text"**. The status text itself is not colored (2026-08-20 feedback; per the sheet's "Memory Pressure status expression")
@@ -65,10 +66,10 @@ Policy: match line weight, corner radius, and abstraction to the brand icon so t
   - The header's Room icon (22pt) + "Room" (title3 semibold) are slightly larger
   - **Usage progress bar** (Memory=blue / Storage=green, thin, rounded)
   - `used / total`
-  - Memory side: `Pressure <status>` (the status word in its state color) + `Swap`
+  - Memory side: `Pressure <status>` (colored dot + normal-color status word) + `Swap`
   - Storage side: `Free`
 - **Top Processes**: name + usage only (top 3. App icons dropped — simplified per 2026-08-20 feedback)
-- **Footer row**: `Make Room` (Room icon) / `Processes` (gauge icon + chevron) / `Settings` (gear)
+- **Footer row**: two flat actions matching the landing-page preview — `Make Room` (Room icon) / `Processes` (gauge icon). Settings remains available from the header gear.
 
 ## 7. Processes List
 

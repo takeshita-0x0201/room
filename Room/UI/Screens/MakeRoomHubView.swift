@@ -53,7 +53,7 @@ struct MakeRoomHubView: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(13)
-            .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 13))
+            .roomPanel(tint: tint)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

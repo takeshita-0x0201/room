@@ -27,8 +27,7 @@ struct MemoryMakeRoomView: View {
                             value: ByteText.long(memory.swapUsedBytes, base: .memory1024))
                 }
                 .padding(13)
-                .background(RoomPalette.memory.opacity(0.07),
-                            in: RoundedRectangle(cornerRadius: 13))
+                .roomPanel(tint: RoomPalette.memory)
 
                 switch memory.pressure {
                 case .normal:
@@ -84,7 +83,11 @@ struct MemoryMakeRoomView: View {
             }
             .toggleStyle(.checkbox)
             .padding(8)
-            .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 8))
+            .background(RoomPalette.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(RoomPalette.hairline, lineWidth: 1)
+            }
         }
 
         // Never present as a guaranteed recovery (requirements §17.4) — keep the "Potential" wording

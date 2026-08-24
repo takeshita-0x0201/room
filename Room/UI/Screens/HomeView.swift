@@ -20,7 +20,7 @@ struct HomeView: View {
                 .padding(13)
             RoomDivider()
             footer
-                .padding(8)
+                .padding(.vertical, 3)
         }
         .background(RoomPalette.canvas)
     }
@@ -45,33 +45,34 @@ struct HomeView: View {
     }
 
     private var footer: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 0) {
             footerButton(title: "Make Room",
                          icon: Image(nsImage: RoomIcon.menuBarImage(pointSize: 15))) {
                 route = .makeRoom
             }
+            Rectangle()
+                .fill(RoomPalette.hairline)
+                .frame(width: 1, height: 24)
+                .accessibilityHidden(true)
             footerButton(title: "Processes", icon: Image(systemName: "gauge")) {
                 route = .processes
-            }
-            footerButton(title: "Settings", icon: Image(systemName: "gearshape")) {
-                openSettingsWindow()
             }
         }
     }
 
     private func footerButton(title: String, icon: Image, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 5) {
+            HStack(spacing: 6) {
                 icon
-                    .frame(height: 16)
+                    .frame(width: 16, height: 16)
+                    .foregroundStyle(.secondary)
                 Text(title)
-                    .font(.caption2)
+                    .font(.caption.weight(.medium))
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
+            .padding(.vertical, 10)
             .contentShape(Rectangle())
-            .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 9))
         }
         .buttonStyle(.plain)
     }
@@ -138,7 +139,7 @@ struct HomeView: View {
 
     @ViewBuilder private var topProcesses: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionHeader(title: "Top Processes", systemImage: "chart.bar")
+            EyebrowLabel(title: "Top Processes")
             if state.processes.isEmpty {
                 loadingRow
             } else {

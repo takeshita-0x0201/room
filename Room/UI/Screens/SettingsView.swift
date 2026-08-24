@@ -104,7 +104,11 @@ struct SettingsView: View {
         .monospacedDigit()
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
+        .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .stroke(RoomPalette.hairline, lineWidth: 1)
+        }
     }
 
     private func sampleValues(for mode: DisplayMode) -> (memory: String, storage: String) {

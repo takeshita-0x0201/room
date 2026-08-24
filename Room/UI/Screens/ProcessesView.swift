@@ -92,7 +92,11 @@ struct ProcessesView: View {
         }
         .font(.body)
         .padding(10)
-        .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 10))
+        .background(RoomPalette.surface, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(RoomPalette.hairline, lineWidth: 1)
+        }
     }
 
     private func quit(_ group: ProcessGroup) {

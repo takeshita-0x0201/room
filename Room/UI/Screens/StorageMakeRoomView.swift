@@ -48,8 +48,7 @@ struct StorageMakeRoomView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 34)
-            .background(RoomPalette.storage.opacity(0.07),
-                        in: RoundedRectangle(cornerRadius: 13))
+            .roomPanel(tint: RoomPalette.storage)
         case .results(let items):
             resultsView(items)
         case .reviewing(let items):
@@ -80,8 +79,7 @@ struct StorageMakeRoomView: View {
                 StatRow(label: "Free", value: ByteText.long(s.freeBytes, base: .storage1000))
             }
             .padding(13)
-            .background(RoomPalette.storage.opacity(0.07),
-                        in: RoundedRectangle(cornerRadius: 13))
+            .roomPanel(tint: RoomPalette.storage)
         }
 
         SectionHeader(title: "Cleanable")
@@ -142,7 +140,11 @@ struct StorageMakeRoomView: View {
                 }
                 .toggleStyle(.checkbox)
                 .padding(8)
-                .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 8))
+                .background(RoomPalette.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(RoomPalette.hairline, lineWidth: 1)
+                }
             case .blocked(let app):
                 HStack {
                     Text(item.title).foregroundStyle(.secondary)

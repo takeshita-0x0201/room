@@ -2,17 +2,57 @@ import AppKit
 import SwiftUI
 
 enum RoomPalette {
-    // System colors softened with gray so state remains familiar without looking overly saturated.
-    static let memory = muted(.systemBlue, amount: 0.22)
-    static let storage = muted(.systemGreen, amount: 0.22)
-    static let warning = muted(.systemYellow, amount: 0.18)
-    static let critical = muted(.systemRed, amount: 0.18)
-    static let canvas = Color(nsColor: .windowBackgroundColor)
-    static let subtleSurface = Color.primary.opacity(0.045)
-    static let hairline = Color.primary.opacity(0.09)
+    // The landing page palette translated into quieter, adaptive macOS colors.
+    // Values intentionally carry more gray than systemBlue/systemGreen.
+    static let memory = adaptive(light: 0x5D7F9F, dark: 0x86A4BE)
+    static let storage = adaptive(light: 0x5C8974, dark: 0x84AC99)
+    static let warning = adaptive(light: 0xA7834D, dark: 0xC5A46D)
+    static let critical = adaptive(light: 0xA86461, dark: 0xCB8580)
+    static let canvas = adaptive(light: 0xF5F4F0, dark: 0x1D1F1D)
+    static let surface = adaptive(light: 0xFFFEFA, dark: 0x272927)
+    static let subtleSurface = adaptive(light: 0xECEBE6, dark: 0x2C2E2C)
+    static let hairline = adaptive(light: 0xD8D7D1, dark: 0x3A3D3A)
 
-    private static func muted(_ color: NSColor, amount: CGFloat) -> Color {
-        Color(nsColor: color.blended(withFraction: amount, of: .systemGray) ?? color)
+    private static func adaptive(light: Int, dark: Int) -> Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            let useDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            return rgb(useDark ? dark : light)
+        })
+    }
+
+    private static func rgb(_ value: Int) -> NSColor {
+        NSColor(srgbRed: CGFloat((value >> 16) & 0xFF) / 255,
+                green: CGFloat((value >> 8) & 0xFF) / 255,
+                blue: CGFloat(value & 0xFF) / 255,
+                alpha: 1)
+    }
+}
+
+struct RoomPanelModifier: ViewModifier {
+    var tint: Color?
+
+    func body(content: Content) -> some View {
+        content
+            .background {
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .fill(RoomPalette.surface)
+                    .overlay {
+                        if let tint {
+                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                .fill(tint.opacity(0.045))
+                        }
+                    }
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .stroke(RoomPalette.hairline, lineWidth: 1)
+            }
+    }
+}
+
+extension View {
+    func roomPanel(tint: Color? = nil) -> some View {
+        modifier(RoomPanelModifier(tint: tint))
     }
 }
 
@@ -47,6 +87,17 @@ struct RoomDivider: View {
             .fill(RoomPalette.hairline)
             .frame(height: 1)
             .accessibilityHidden(true)
+    }
+}
+
+struct EyebrowLabel: View {
+    let title: String
+
+    var body: some View {
+        Text(title.uppercased())
+            .font(.caption2.weight(.semibold))
+            .tracking(1.1)
+            .foregroundStyle(.secondary)
     }
 }
 
@@ -94,7 +145,7 @@ struct RoomEmptyState: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 21)
         .padding(.horizontal, 13)
-        .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 13))
+        .roomPanel(tint: tint)
     }
 }
 
@@ -142,7 +193,7 @@ struct UsageBar: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule().fill(.quaternary)
+                Capsule().fill(RoomPalette.subtleSurface)
                 Capsule().fill(tint)
                     .frame(width: max(4, geo.size.width * min(max(fraction, 0), 1)))
             }
@@ -176,7 +227,11 @@ struct NavRow: View {
             .contentShape(Rectangle())
             .padding(.horizontal, 10)
             .padding(.vertical, 9)
-            .background(RoomPalette.subtleSurface, in: RoundedRectangle(cornerRadius: 9))
+            .background(RoomPalette.surface, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .stroke(RoomPalette.hairline, lineWidth: 1)
+            }
         }
         .buttonStyle(.plain)
     }
