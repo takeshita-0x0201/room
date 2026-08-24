@@ -1,0 +1,125 @@
+name: Release to Homebrew
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Room/**"
+      - "project.yml"
+      - ".github/workflows/release.yml"
+      - "scripts/update_homebrew_cask.rb"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - name: Check out Room
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Build and test
+        run: |
+          xcodebuild -project Room.xcodeproj -scheme Room \
+            -destination 'platform=macOS' \
+            CODE_SIGN_IDENTITY=- \
+            test
+
+      - name: Set release version
+        id: version
+        run: |
+          base_version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Room/Info.plist)
+          build_number="${GITHUB_RUN_NUMBER}"
+          release_tag="v${base_version}-build.${build_number}"
+          asset_name="Room-${base_version}-build.${build_number}.zip"
+
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${build_number}" Room/Info.plist
+
+          echo "base=${base_version}" >> "$GITHUB_OUTPUT"
+          echo "build=${build_number}" >> "$GITHUB_OUTPUT"
+          echo "cask=${base_version},${build_number}" >> "$GITHUB_OUTPUT"
+          echo "tag=${release_tag}" >> "$GITHUB_OUTPUT"
+          echo "asset=${asset_name}" >> "$GITHUB_OUTPUT"
+
+      - name: Build universal release app
+        run: |
+          xcodebuild -project Room.xcodeproj -scheme Room \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            -derivedDataPath build \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY=- \
+            build
+
+      - name: Verify and package app
+        env:
+          ASSET_NAME: ${{ steps.version.outputs.asset }}
+        run: |
+          app_path="build/Build/Products/Release/Room.app"
+          binary_path="${app_path}/Contents/MacOS/Room"
+
+          lipo -info "$binary_path" | grep x86_64 | grep -q arm64
+          codesign --verify --deep --strict "$app_path"
+          ditto -c -k --sequesterRsrc --keepParent "$app_path" "$ASSET_NAME"
+          shasum -a 256 "$ASSET_NAME"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          ASSET_NAME: ${{ steps.version.outputs.asset }}
+          BASE_VERSION: ${{ steps.version.outputs.base }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "$ASSET_NAME" --clobber
+          else
+            gh release create "$RELEASE_TAG" "$ASSET_NAME" \
+              --title "Room ${BASE_VERSION} (build ${BUILD_NUMBER})" \
+              --generate-notes \
+              --latest
+          fi
+
+      - name: Check out Homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: takeshita-0x0201/homebrew-tap
+          path: homebrew-tap
+          ssh-key: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
+
+      - name: Update Homebrew cask
+        env:
+          CASK_VERSION: ${{ steps.version.outputs.cask }}
+          ASSET_NAME: ${{ steps.version.outputs.asset }}
+        run: |
+          asset_sha=$(shasum -a 256 "$ASSET_NAME" | awk '{print $1}')
+          ruby scripts/update_homebrew_cask.rb \
+            homebrew-tap/Casks/room.rb \
+            "$CASK_VERSION" \
+            "$asset_sha"
+
+          git -C homebrew-tap config user.name "github-actions[bot]"
+          git -C homebrew-tap config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C homebrew-tap add Casks/room.rb
+
+          if git -C homebrew-tap diff --cached --quiet; then
+            exit 0
+          fi
+
+          git -C homebrew-tap commit \
+            -m "chore: update Room to ${CASK_VERSION}" \
+            -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+          git -C homebrew-tap push origin main
