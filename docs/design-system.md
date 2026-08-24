@@ -60,7 +60,7 @@ Policy: match line weight, corner radius, and abstraction to the brand icon so t
 
 ## 6. Main Popover
 
-- **Header**: Room icon + `Room` + gear at the right edge (Settings shortcut)
+- **Header**: Room icon + `Room` + Quit and Settings icon buttons at the right edge
 - **Memory / Storage are stacked in a single column** (the 2-column card was dropped per 2026-08-20 feedback; popover width is 320px):
   - Heading is **Title Case, not bold, body size** (icon and text at the same size; 2026-08-20 feedback) + `%` on the right (**the % is also not bold, body size**)
   - The header's Room icon (22pt) + "Room" (title3 semibold) are slightly larger

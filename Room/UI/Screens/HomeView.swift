@@ -32,6 +32,16 @@ struct HomeView: View {
             Text("Room")
                 .font(.title3.weight(.semibold))
             Spacer()
+            Button { NSApp.terminate(nil) } label: {
+                Image(systemName: "power")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, height: 28)
+                    .background(RoomPalette.subtleSurface, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .help("Quit Room")
+            .accessibilityLabel("Quit Room")
             Button { openSettingsWindow() } label: {
                 Image(systemName: "gearshape")
                     .font(.body)

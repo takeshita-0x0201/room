@@ -54,6 +54,10 @@
       <path d="m1 8 15 8 15-8M16 16v18"/>
     </g>
     <text x="866" y="184" font-size="21" font-weight="650">Room</text>
+    <circle cx="1244" cy="173" r="18" fill="#ecebe6"/>
+    <g transform="translate(1244 173)" fill="none" stroke="#727773" stroke-width="2" stroke-linecap="round">
+      <path d="M0-9v9M-6-6a9 9 0 1 0 12 0"/>
+    </g>
     <circle cx="1288" cy="173" r="18" fill="#ecebe6"/>
     <g transform="translate(1288 173)" fill="none" stroke="#727773" stroke-width="2">
       <circle r="6"/><path d="M0-11v4M0 7v4M-11 0h4M7 0h4M-8-8l3 3M5 5l3 3M8-8 5-5M-5 5l-3 3"/>
