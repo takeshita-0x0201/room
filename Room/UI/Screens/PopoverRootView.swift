@@ -19,6 +19,10 @@ struct PopoverRootView: View {
             }
         }
         .frame(width: 320)
+        // MenuBarExtra keeps its previous window height while navigating. Keep
+        // shorter destinations top-aligned inside the home screen's footprint
+        // so the system window never exposes an empty translucent region.
+        .frame(minHeight: 390, alignment: .top)
         .background(RoomPalette.canvas)
         .onAppear {
             route = .home
