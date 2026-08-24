@@ -413,6 +413,7 @@ Total                15.1 GB
 
 ```text
 GENERAL
+  Appearance             System / Light / Dark
   Launch at Login        ON        ← SMAppService.mainApp (macOS 13+ standard API)
 MENU BAR
   Show Memory            ON
@@ -421,7 +422,8 @@ MENU BAR
   Refresh Interval       ● 5 sec ○ 10 sec ○ 30 sec
 ```
 
-- Display / Show settings are reflected in the menu bar immediately
+- Appearance / Display / Show settings are reflected in the app and menu bar immediately
+- System appearance follows the current macOS appearance; Light and Dark override it for Room only
 - Settings are stored in `UserDefaults` (`@AppStorage`)
 
 ### Refresh Policy
@@ -531,8 +533,9 @@ A tiny macOS menu bar app for memory and storage.
 - [ ] Processes list (RAM descending) + Quit / Force Quit + protection rules
 - [ ] Memory Make Room (`No action needed` at Normal / selective Quit + Potential recovery at Warning / Critical)
 - [ ] Storage Make Room (scan → Cleanable display → Review → selective deletion → actual-result display)
-- [ ] Settings (Launch at Login / Show toggles / Display mode + preview / Refresh Interval)
-- [ ] Light / Dark Mode, VoiceOver labels, keyboard operation
+- [ ] Settings (Appearance / Launch at Login / Show toggles / Display mode + preview / Refresh Interval)
+- [x] Light / Dark Mode
+- [ ] VoiceOver labels and keyboard operation
 
 ### Memory Make Room Completion Criteria (v1.0 §36)
 

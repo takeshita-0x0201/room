@@ -83,7 +83,10 @@ Policy: match line weight, corner radius, and abstraction to the brand icon so t
 - Category rows: name + size + chevron
 - `Total` row + **blue `Review` button** on the right (primary action / borderedProminent)
 
-## 9. Settings > Display
+## 9. Settings
+
+- **Appearance** uses a segmented `System / Light / Dark` control. System follows macOS; Light and Dark override Room immediately.
+- The adaptive canvas, surfaces, borders, and text colors must remain readable in all three modes.
 
 - **Preview chip** to the right of each radio row (Memory & Storage icons + fixed sample values, rounded background. No Room icon — to match the actual menu bar display)
   - Percentage: `72 / 68`, Free: `5.6G / 171G`, Used: `18.4G / 341G`

@@ -27,4 +27,8 @@ final class ModelsTests: XCTestCase {
         XCTAssertEqual(MemoryPressureLevel.critical.rawValue, "Critical")
         XCTAssertEqual(MemoryPressureLevel.unavailable.rawValue, "Unavailable")
     }
+
+    func testAppearanceModeTitles() {
+        XCTAssertEqual(AppearanceMode.allCases.map(\.title), ["System", "Light", "Dark"])
+    }
 }

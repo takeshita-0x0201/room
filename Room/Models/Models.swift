@@ -38,3 +38,17 @@ enum DisplayMode: String, CaseIterable {
         }
     }
 }
+
+enum AppearanceMode: String, CaseIterable {
+    case system
+    case light
+    case dark
+
+    var title: String {
+        switch self {
+        case .system: "System"
+        case .light: "Light"
+        case .dark: "Dark"
+        }
+    }
+}

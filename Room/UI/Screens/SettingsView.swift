@@ -2,6 +2,7 @@ import ServiceManagement
 import SwiftUI
 
 struct SettingsView: View {
+    @AppStorage(SettingsKey.appearance) private var appearanceRaw = AppearanceMode.system.rawValue
     @AppStorage(SettingsKey.displayMode) private var displayModeRaw = DisplayMode.percentage.rawValue
     @AppStorage(SettingsKey.showMemory) private var showMemory = true
     @AppStorage(SettingsKey.showStorage) private var showStorage = true
@@ -29,6 +30,13 @@ struct SettingsView: View {
 
             Form {
                 Section("General") {
+                    Picker("Appearance", selection: $appearanceRaw) {
+                        ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
+                            Text(mode.title).tag(mode.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
                     Toggle("Launch at Login", isOn: $launchAtLogin)
                         .onChange(of: launchAtLogin) { _, enabled in
                             do {
