@@ -47,6 +47,7 @@ struct MemoryMakeRoomView: View {
                     }
                 }
             }
+            .padding(13)
         }
         .frame(maxHeight: 360)
         .background(RoomPalette.canvas)
