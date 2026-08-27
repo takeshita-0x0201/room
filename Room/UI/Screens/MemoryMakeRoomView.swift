@@ -14,39 +14,41 @@ struct MemoryMakeRoomView: View {
     private static let minimumFootprint: UInt64 = 200 * 1024 * 1024   // under 200 MB is not a candidate
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 13) {
-            BackHeader(title: "Make Room — Memory", route: $route, back: .makeRoom)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 13) {
+                BackHeader(title: "Make Room — Memory", route: $route, back: .makeRoom)
 
-            if let memory = state.memory {
-                VStack(alignment: .leading, spacing: 8) {
-                    SectionHeader(title: "Memory Pressure",
-                                  systemImage: "memorychip",
-                                  accent: RoomPalette.memory)
-                    PressureRow(pressure: memory.pressure)
-                    StatRow(label: "Swap",
-                            value: ByteText.long(memory.swapUsedBytes, base: .memory1024))
-                }
-                .padding(13)
-                .roomPanel(tint: RoomPalette.memory)
+                if let memory = state.memory {
+                    VStack(alignment: .leading, spacing: 8) {
+                        SectionHeader(title: "Memory Pressure",
+                                      systemImage: "memorychip",
+                                      accent: RoomPalette.memory)
+                        PressureRow(pressure: memory.pressure)
+                        StatRow(label: "Swap",
+                                value: ByteText.long(memory.swapUsedBytes, base: .memory1024))
+                    }
+                    .padding(13)
+                    .roomPanel(tint: RoomPalette.memory)
 
-                switch memory.pressure {
-                case .normal:
-                    RoomEmptyState(systemImage: "checkmark.circle",
-                                   title: "No action needed",
-                                   detail: "Your Mac has enough breathing room.",
-                                   tint: RoomPalette.memory)
-                case .unavailable:
-                    // Don't let an unavailable reading read as "no problem" (requirements D21)
-                    RoomEmptyState(systemImage: "questionmark.circle",
-                                   title: "Pressure unavailable",
-                                   detail: "Room couldn't read the current Memory Pressure.",
-                                   tint: .secondary)
-                case .warning, .critical:
-                    selectionList
+                    switch memory.pressure {
+                    case .normal:
+                        RoomEmptyState(systemImage: "checkmark.circle",
+                                       title: "No action needed",
+                                       detail: "Your Mac has enough breathing room.",
+                                       tint: RoomPalette.memory)
+                    case .unavailable:
+                        // Don't let an unavailable reading read as "no problem" (requirements D21)
+                        RoomEmptyState(systemImage: "questionmark.circle",
+                                       title: "Pressure unavailable",
+                                       detail: "Room couldn't read the current Memory Pressure.",
+                                       tint: .secondary)
+                    case .warning, .critical:
+                        selectionList
+                    }
                 }
             }
         }
-        .padding(13)
+        .frame(maxHeight: 360)
         .background(RoomPalette.canvas)
     }
 

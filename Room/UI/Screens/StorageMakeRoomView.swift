@@ -23,15 +23,18 @@ struct StorageMakeRoomView: View {
     @MainActor private static var isCleaning = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 13) {
-            if case .cleaning = phase {
-                Text("Make Room — Storage").font(.headline)
-            } else {
-                BackHeader(title: "Make Room — Storage", route: $route, back: .makeRoom)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 13) {
+                if case .cleaning = phase {
+                    Text("Make Room — Storage").font(.headline)
+                } else {
+                    BackHeader(title: "Make Room — Storage", route: $route, back: .makeRoom)
+                }
+                content
             }
-            content
+            .padding(13)
         }
-        .padding(13)
+        .frame(maxHeight: 360)
         .background(RoomPalette.canvas)
         .onAppear { startScan() }
         .onDisappear { scanTask?.cancel() }
